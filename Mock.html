@@ -1,0 +1,2605 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mock Exam Generator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script>
+window.MathJax = {
+  tex: { 
+    inlineMath: [['\\(', '\\)'], ['$', '$']], 
+    displayMath: [['\\[', '\\]'], ['$$', '$$']], 
+    processEscapes: true,
+    processEnvironments: true,
+    processRefs: true
+  },
+  options: { 
+    skipHtmlTags: ['script','noscript','style','textarea','pre'],
+    enableMenu: false,
+    ignoreHtmlClass: 'tex2jax_ignore',
+    processHtmlClass: 'tex2jax_process'
+  },
+  startup: {
+    typeset: false
+  }
+};
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-chtml.min.js"></script>
+<style>
+:root{
+  --bg:#08080f;--surface:#101018;--card:#161622;--card2:#1c1c2a;--border:#252538;--border2:#2e2e48;
+  --accent:#7c6af7;--adim:rgba(124,106,247,0.12);--a2:#f7c26a;
+  --text:#e8e8f2;--text2:#b8b8c8;--muted:#5a5a7a;--muted2:#7a7a9a;
+  --ok:#4ade80;--err:#f87171;--p1:#7c6af7;--p2:#f0a26a;
+}
+:root.light-mode{
+  --bg:#f8f9fc;--surface:#ffffff;--card:#ffffff;--card2:#f1f3f8;--border:#e2e8f0;--border2:#cbd5e1;
+  --accent:#6d5ad6;--adim:rgba(109,90,214,0.1);--a2:#d4960a;
+  --text:#1e293b;--text2:#475569;--muted:#64748b;--muted2:#94a3b8;
+  --ok:#16a34a;--err:#dc2626;--p1:#6d5ad6;--p2:#d4960a;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min-height:100vh;overflow-x:hidden;}
+body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");background-size:300px;}
+#app{position:relative;z-index:1;}
+
+#themeToggle{position:fixed;top:16px;right:16px;z-index:9999;width:40px;height:40px;border-radius:50%;border:2px solid var(--accent);background:var(--card);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;box-shadow:0 4px 12px rgba(124,106,247,.4);}
+#themeToggle:hover{border-color:var(--a2);background:var(--surface);box-shadow:0 6px 16px rgba(124,106,247,.6);transform:scale(1.05);}
+.theme-icon{font-size:18px;position:absolute;transition:opacity .2s,transform .2s;}
+.theme-icon.sun{opacity:0;transform:rotate(-90deg);color:var(--a2);}
+.theme-icon.moon{opacity:1;transform:rotate(0);color:var(--accent);}
+:root.light-mode .theme-icon.sun{opacity:1;transform:rotate(0);color:var(--a2);}
+:root.light-mode .theme-icon.moon{opacity:0;transform:rotate(90deg);color:var(--accent);}
+
+/* WELCOME PAGE */
+#welcome{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 24px;background:radial-gradient(ellipse 100% 70% at 50% -10%,#1a0f3a 0%,transparent 65%);opacity:1;transition:opacity 0.3s ease-in-out;}
+:root.light-mode #welcome{background:radial-gradient(ellipse 100% 70% at 50% -10%,#e8e4ff 0%,transparent 65%);}
+.badge{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--muted2);border:1px solid var(--border2);padding:5px 14px;border-radius:20px;margin-bottom:44px;}
+.welcome-title{font-family:'DM Serif Display',serif;font-size:clamp(44px,9vw,96px);line-height:1.0;text-align:center;margin-bottom:16px;background:linear-gradient(145deg,#fff 30%,#a090ff 75%,#7c6af7 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+:root.light-mode .welcome-title{background:linear-gradient(145deg,#1e293b 30%,#6d5ad6 75%,#8b7cf7 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.welcome-sub{font-size:15px;color:var(--muted2);text-align:center;max-width:500px;line-height:1.8;margin-bottom:56px;margin-left:auto;margin-right:auto;}
+.step-lbl{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:14px;text-align:center;}
+.exam-row{display:flex;gap:16px;flex-wrap:wrap;justify-content:center;margin-bottom:32px;}
+.exam-card{width:280px;padding:36px 28px;background:var(--card);border:1px solid var(--border);border-radius:18px;cursor:pointer;transition:all .25s;position:relative;overflow:hidden;text-align:center;}
+.exam-card::after{content:'';position:absolute;inset:0;opacity:0;transition:opacity .3s;}
+.exam-card.esat::after{background:radial-gradient(circle at 50% 0%,rgba(124,106,247,.18),transparent 65%);}
+.exam-card.tmua::after{background:radial-gradient(circle at 50% 0%,rgba(240,162,106,.18),transparent 65%);}
+.exam-card:hover::after,.exam-card.sel::after{opacity:1;}
+.exam-card:hover,.exam-card.sel{transform:translateY(-5px);}
+.exam-card.esat:hover,.exam-card.esat.sel{border-color:var(--p1);box-shadow:0 0 0 2px rgba(124,106,247,.35),0 12px 40px rgba(124,106,247,.18);}
+.exam-card.tmua:hover,.exam-card.tmua.sel{border-color:var(--p2);box-shadow:0 0 0 2px rgba(240,162,106,.35),0 12px 40px rgba(240,162,106,.18);}
+.enum{font-family:'DM Serif Display',serif;font-size:48px;margin-bottom:8px;line-height:1;}
+.esat .enum{color:var(--p1);}.tmua .enum{color:var(--p2);}
+.ename{font-size:16px;font-weight:600;margin-bottom:8px;}
+.edesc{font-size:12px;color:var(--muted2);line-height:1.6;margin-bottom:16px;}
+.emeta{margin-top:18px;padding-top:14px;border-top:1px solid var(--border);display:flex;gap:10px;justify-content:center;font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);}
+
+/* HOME PAGE */
+#home{min-height:100vh;display:none;flex-direction:column;align-items:center;justify-content:center;padding:60px 24px;background:radial-gradient(ellipse 100% 70% at 50% -10%,#1a0f3a 0%,transparent 65%);opacity:1;transition:opacity 0.3s ease-in-out;}
+:root.light-mode #home{background:radial-gradient(ellipse 100% 70% at 50% -10%,#e8e4ff 0%,transparent 65%);}
+.home-title{font-family:'DM Serif Display',serif;font-size:clamp(44px,9vw,96px);line-height:1.0;text-align:center;margin-bottom:16px;background:linear-gradient(145deg,#fff 30%,#a090ff 75%,#7c6af7 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+:root.light-mode .home-title{background:linear-gradient(145deg,#1e293b 30%,#6d5ad6 75%,#8b7cf7 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.home-sub{font-size:15px;color:var(--muted2);text-align:center;max-width:400px;line-height:1.8;margin-bottom:56px;margin-left:auto;margin-right:auto;}
+.back-btn{position:fixed;top:16px;left:16px;z-index:9999;padding:10px 18px;border-radius:10px;border:1px solid var(--border);background:var(--card);color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;cursor:pointer;transition:all .2s;}
+.back-btn:hover{border-color:var(--accent);color:var(--accent);}
+.module-row{display:flex;gap:16px;flex-wrap:wrap;justify-content:center;margin-bottom:32px;}
+.paper-row{display:flex;gap:16px;flex-wrap:wrap;justify-content:center;margin-bottom:32px;}
+.module-card,.paper-card{width:210px;padding:28px 24px;background:var(--card);border:1px solid var(--border);border-radius:18px;cursor:pointer;transition:all .4s cubic-bezier(0.25, 0.46, 0.45, 0.94);position:relative;overflow:hidden;}
+.module-card::after,.paper-card::after{content:'';position:absolute;inset:0;opacity:0;transition:opacity .3s;}
+.module-card.math1::after,.paper-card.p1::after{background:radial-gradient(circle at 50% 0%,rgba(124,106,247,.18),transparent 65%);}
+.module-card.math2::after,.paper-card.p2::after{background:radial-gradient(circle at 50% 0%,rgba(240,162,106,.18),transparent 65%);}
+.module-card.physics::after{background:radial-gradient(circle at 50% 0%,rgba(74,222,128,.18),transparent 65%);}
+.module-card.chem::after{background:radial-gradient(circle at 50% 0%,rgba(248,113,113,.18),transparent 65%);}
+.module-card.biology::after{background:radial-gradient(circle at 50% 0%,rgba(124,106,247,.18),transparent 65%);}
+.module-card:hover::after,.module-card.sel::after,.paper-card:hover::after,.paper-card.sel::after{opacity:1;}
+.module-card:hover,.module-card.sel,.paper-card:hover,.paper-card.sel{transform:translateY(-5px);}
+.module-card.math1:hover,.module-card.math1.sel,.paper-card.p1:hover,.paper-card.p1.sel{border-color:var(--p1);box-shadow:0 0 0 2px rgba(124,106,247,.35),0 12px 40px rgba(124,106,247,.18);}
+.module-card.math2:hover,.module-card.math2.sel,.paper-card.p2:hover,.paper-card.p2.sel{border-color:var(--p2);box-shadow:0 0 0 2px rgba(240,162,106,.35),0 12px 40px rgba(240,162,106,.18);}
+.module-card.physics:hover,.module-card.physics.sel{border-color:#4ade80;box-shadow:0 0 0 2px rgba(74,222,128,.35),0 12px 40px rgba(74,222,128,.18);}
+.module-card.chem:hover,.module-card.chem.sel{border-color:#f87171;box-shadow:0 0 0 2px rgba(248,113,113,.35),0 12px 40px rgba(248,113,113,.18);}
+.module-card.biology:hover,.module-card.biology.sel{border-color:#7c6af7;box-shadow:0 0 0 2px rgba(124,106,247,.35),0 12px 40px rgba(124,106,247,.18);}
+.mnum,.pnum{font-family:'DM Serif Display',serif;font-size:38px;margin-bottom:6px;line-height:1;}
+.math1 .mnum,.p1 .pnum{color:var(--p1);}.math2 .mnum,.p2 .pnum{color:var(--p2);}.physics .mnum{color:#4ade80;}.chem .mnum{color:#f87171;}.biology .mnum{color:#7c6af7;}
+.mname,.pname{font-size:12px;font-weight:600;margin-bottom:5px;}
+.mdesc,.pdesc{font-size:11px;color:var(--muted2);line-height:1.55;}
+.mmeta,.pmeta{margin-top:18px;padding-top:14px;border-top:1px solid var(--border);display:flex;gap:10px;font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);}
+.mmeta .required{color:var(--ok);font-weight:600;}
+.diff-row{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin-bottom:40px;}
+.diff-card{padding:14px 22px;border-radius:12px;border:1px solid var(--border);background:var(--card);cursor:pointer;transition:all .4s cubic-bezier(0.25, 0.46, 0.45, 0.94);text-align:center;min-width:110px;}
+.diff-card:hover{transform:translateY(-2px);box-shadow:0 4px 12px rgba(0,0,0,0.1);}
+.diff-card:active{transform:translateY(0);box-shadow:0 2px 4px rgba(0,0,0,0.1);}
+.di{font-size:22px;margin-bottom:6px;} .dn{font-size:12px;font-weight:600;} .dh{font-size:10px;color:var(--muted2);margin-top:2px;}
+.diff-card.easy.sel,.diff-card.easy:hover{border-color:#4ade80;background:rgba(74,222,128,.08);}
+.diff-card.easy.sel .dn{color:#4ade80;}
+.diff-card.medium.sel,.diff-card.medium:hover{border-color:#f7c26a;background:rgba(247,194,106,.08);}
+.diff-card.medium.sel .dn{color:#f7c26a;}
+.diff-card.hard.sel,.diff-card.hard:hover{border-color:#f87171;background:rgba(248,113,113,.08);}
+.diff-card.hard.sel .dn{color:#f87171;}
+.diff-card.timed.sel,.diff-card.timed:hover{border-color:#7c6af7;background:rgba(124,106,247,.08);}
+.diff-card.timed.sel .dn{color:#7c6af7;}
+.diff-card.free.sel,.diff-card.free:hover{border-color:#4ade80;background:rgba(74,222,128,.08);}
+.diff-card.free.sel .dn{color:#4ade80;}
+.start-btn-container{display:flex;justify-content:center;width:100%;margin-top:48px;}
+.start-btn{padding:16px 52px;border-radius:12px;border:none;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:600;background:var(--accent);color:#fff;cursor:pointer;transition:all .25s;opacity:.3;pointer-events:none;box-shadow:0 4px 24px rgba(124,106,247,.3);}
+.start-btn.ready{opacity:1;pointer-events:all;}
+.start-btn.ready:hover{background:#6a58e0;transform:translateY(-2px);}
+.start-btn.ready:active{background:#5b48c0;transform:translateY(0);box-shadow:0 2px 8px rgba(124,106,247,.3);}
+
+#generating{min-height:100vh;display:none;flex-direction:column;align-items:center;justify-content:center;gap:32px;opacity:1;transition:opacity 0.3s ease-in-out;}
+.gen-orb{width:80px;height:80px;border-radius:50%;background:radial-gradient(circle,rgba(124,106,247,.3) 0%,transparent 70%);border:1px solid rgba(124,106,247,.4);position:relative;animation:pulse 1.5s ease-in-out infinite;}
+.gen-orb::after{content:'';position:absolute;inset:10px;border-radius:50%;border:1px solid rgba(124,106,247,.6);border-top-color:transparent;animation:spin .9s linear infinite;}
+:root.light-mode .gen-orb{background:radial-gradient(circle,rgba(109,90,214,.25) 0%,transparent 70%);border-color:rgba(109,90,214,.3);}
+:root.light-mode .gen-orb::after{border-color:rgba(109,90,214,.5);border-top-color:transparent;}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(124,106,247,.3);}50%{box-shadow:0 0 0 20px rgba(124,106,247,0);}}
+@keyframes spin{to{transform:rotate(360deg);}}
+.gen-title{font-family:'DM Mono',monospace;font-size:14px;color:var(--text);text-align:center;}
+.gen-sub{font-size:12px;color:var(--muted2);text-align:center;}
+.gen-bar-wrap{width:280px;}
+.gen-bar-track{height:3px;background:var(--border);border-radius:3px;overflow:hidden;margin-bottom:8px;}
+.gen-bar-fill{height:100%;background:linear-gradient(90deg,var(--accent),#a090ff);border-radius:3px;transition:width .5s ease;}
+.gen-pct{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);text-align:center;}
+.gen-steps{width:280px;display:flex;flex-direction:column;gap:9px;}
+.gstep{display:flex;align-items:center;gap:10px;font-size:12px;color:var(--muted);transition:color .3s;}
+.gstep.active{color:var(--text);}  .gstep.done{color:var(--ok);}
+.gsdot{width:8px;height:8px;border-radius:50%;background:var(--border);flex-shrink:0;transition:background .3s;}
+.gstep.active .gsdot{background:var(--accent);animation:blink 1s infinite;}
+.gstep.done .gsdot{background:var(--ok);}
+@keyframes blink{0%,100%{opacity:1;}50%{opacity:.35;}}
+
+#ready{display:none;min-height:100vh;flex-direction:column;align-items:center;justify-content:center;padding:60px 24px;opacity:1;transition:opacity 0.3s ease-in-out;}
+.ready-icon{width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,var(--ok),#22c55e);display:flex;align-items:center;justify-content:center;font-size:40px;color:#fff;margin-bottom:32px;box-shadow:0 8px 32px rgba(74,222,128,.35);animation:readyPulse 2s ease-in-out infinite;}
+@keyframes readyPulse{0%,100%{transform:scale(1);box-shadow:0 8px 32px rgba(74,222,128,.35);}50%{transform:scale(1.05);box-shadow:0 12px 40px rgba(74,222,128,.5);}}
+.ready-stats{display:flex;align-items:center;gap:32px;background:var(--card);border:1px solid var(--border);border-radius:20px;padding:28px 40px;box-shadow:0 4px 20px rgba(0,0,0,.08);}
+.rstat-item{display:flex;flex-direction:column;align-items:center;gap:6px;}
+.rstat-num{font-size:36px;font-weight:700;color:var(--accent);font-family:'DM Mono',monospace;line-height:1;}
+.rstat-label{font-size:12px;color:var(--muted2);text-transform:uppercase;letter-spacing:1px;}
+.rstat-divider{width:1px;height:50px;background:var(--border);}
+:root.light-mode .ready-icon{box-shadow:0 8px 32px rgba(74,222,128,.25);}
+:root.light-mode .ready-stats{box-shadow:0 4px 20px rgba(0,0,0,.05);}
+
+#exam{display:none;max-width:760px;margin:0 auto;padding:40px 20px 100px;opacity:1;transition:opacity 0.3s ease-in-out;}
+.etop{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:32px;flex-wrap:wrap;gap:12px;}
+.einfo{display:flex;flex-direction:column;gap:4px;}
+.elbl{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted2);letter-spacing:2px;}
+.ehead{font-family:'DM Serif Display',serif;font-size:22px;}
+.dpill{font-family:'DM Mono',monospace;font-size:10px;padding:3px 10px;border-radius:20px;margin-top:4px;display:inline-block;}
+.dpill.easy{background:rgba(74,222,128,.12);color:#4ade80;border:1px solid rgba(74,222,128,.25);}
+.dpill.medium{background:rgba(247,194,106,.12);color:#f7c26a;border:1px solid rgba(247,194,106,.25);}
+.dpill.hard{background:rgba(248,113,113,.12);color:#f87171;border:1px solid rgba(248,113,113,.25);}
+.estats{text-align:right;font-family:'DM Mono',monospace;font-size:11px;color:var(--muted2);display:flex;flex-direction:column;align-items:flex-end;gap:8px;}
+.timer-wrap{display:flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:8px 14px;}
+.timer-icon{font-size:14px;}
+.timer-display{font-family:'DM Mono',monospace;font-size:18px;font-weight:500;color:var(--text);letter-spacing:2px;min-width:64px;}
+.refresh-math-btn{width:32px;height:32px;border-radius:8px;border:1px solid var(--border);background:var(--card);color:var(--muted2);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;font-size:14px;flex-shrink:0;}
+.refresh-math-btn:hover{border-color:var(--accent);color:var(--accent);background:var(--surface);transform:rotate(180deg);}
+.refresh-math-btn:active{transform:rotate(180deg) scale(0.95);}
+.prog-wrap{margin-bottom:32px;}
+.prog-track{height:4px;background:var(--border);border-radius:3px;overflow:hidden;}
+.prog-fill{height:100%;background:linear-gradient(90deg,var(--accent),#a090ff);border-radius:3px;transition:width .4s ease;box-shadow:0 0 4px rgba(124,106,247,.3);}
+.prog-lbl{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);margin-top:6px;text-align:right;font-weight:500;}
+.dotgrid{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:28px;}
+.dot{width:30px;height:30px;border-radius:7px;border:1px solid var(--border);background:var(--surface);display:flex;align-items:center;justify-content:center;font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);cursor:pointer;transition:all .15s;}
+.dot:hover{border-color:var(--muted2);}
+.dot.answered{background:rgba(124,106,247,.15);border-color:var(--accent);color:var(--accent);}
+.dot.current{box-shadow:0 0 0 2px var(--accent);border-color:var(--accent);color:var(--accent);font-weight:600;}
+.qcard{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:36px;margin-bottom:20px;animation:fadeUp .25s ease;box-shadow:0 2px 8px rgba(0,0,0,.05);}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+.qnum{font-family:'DM Mono',monospace;font-size:10px;color:var(--accent);letter-spacing:2px;margin-bottom:10px;}
+.qtopic{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted2);margin-bottom:14px;}
+.qbody{font-size:15px;line-height:1.95;color:var(--text);margin-bottom:26px;}
+.q-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;}
+.q-info{flex:1;}
+.challenge-btn{width:32px;height:32px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--muted2);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;font-size:16px;flex-shrink:0;}
+.challenge-btn:hover{border-color:var(--err);color:var(--err);background:rgba(248,113,113,.08);}
+.challenge-btn.active{border-color:var(--err);color:var(--err);background:rgba(248,113,113,.15);}
+.challenge-btn.loading{animation:spin 1s linear infinite;color:var(--accent);}
+.f-option-wrap{display:none;margin-top:16px;padding:16px;background:var(--surface);border-radius:10px;border:1px solid var(--border2);}
+.f-option-wrap.open{display:block;}
+.f-option-label{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted2);margin-bottom:8px;}
+.f-option-input{width:100%;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:12px 14px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;resize:none;outline:none;min-height:60px;}
+.f-option-input:focus{border-color:var(--accent);}
+.f-option-input::placeholder{color:var(--muted);}
+.opts{display:flex;flex-direction:column;gap:10px;}
+.opt{display:flex;align-items:flex-start;gap:14px;padding:14px 20px;border-radius:10px;border:1px solid var(--border);background:var(--surface);cursor:pointer;transition:all .18s;font-size:14px;}
+.opt:hover{border-color:var(--border2);background:var(--card2);transform:translateY(-3px);box-shadow:0 4px 12px rgba(0,0,0,.1);}
+.opt:active{transform:translateY(-1px);box-shadow:0 2px 6px rgba(0,0,0,.08);}
+.opt.sel{border-color:var(--accent);background:var(--adim);box-shadow:0 4px 12px rgba(124,106,247,.2);}
+.okey{font-family:'DM Mono',monospace;font-size:11px;color:var(--accent);min-width:18px;padding-top:1px;}
+.oval{flex:1;line-height:1.75;}
+.qnav{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:20px;}
+.btn{padding:11px 24px;border-radius:10px;border:none;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;cursor:pointer;transition:all .2s;white-space:nowrap;}
+.btn:active{transform:scale(0.98);}
+.btn-ghost{background:var(--card);color:var(--text);border:1px solid var(--border);}
+.btn-ghost:hover{border-color:var(--border2);background:var(--card2);transform:translateY(-2px);box-shadow:0 2px 8px rgba(0,0,0,.08);}
+.btn-prime{background:var(--accent);color:#fff;}
+.btn-prime:hover{background:#6a58e0;transform:translateY(-2px);box-shadow:0 4px 12px rgba(124,106,247,.3);}
+.btn-submit{background:linear-gradient(135deg,var(--a2),#e8a840);color:#1a1000;font-weight:700;padding:12px 32px;}
+.btn-submit:hover{opacity:.9;transform:translateY(-2px);box-shadow:0 4px 12px rgba(247,194,106,.3);}
+
+#results{display:none;max-width:760px;margin:0 auto;padding:40px 20px 120px;opacity:1;transition:opacity 0.3s ease-in-out;}
+.rbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:32px;flex-wrap:wrap;gap:12px;}
+.scard{background:var(--card);border:1px solid var(--border);border-radius:24px;padding:44px;text-align:center;margin-bottom:24px;position:relative;overflow:hidden;box-shadow:0 4px 16px rgba(0,0,0,.08);}
+.scard::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 80% 60% at 50% 110%,rgba(124,106,247,.12),transparent 60%);}
+.sbig{font-family:'DM Serif Display',serif;font-size:88px;line-height:1;color:var(--accent);position:relative;}
+.sbig span{font-size:36px;color:var(--muted2);}
+.scap{font-size:13px;color:var(--muted2);margin-top:6px;}
+.bpill{display:inline-flex;align-items:center;gap:6px;margin-top:16px;padding:7px 22px;border-radius:24px;font-family:'DM Mono',monospace;font-size:12px;}
+.sbreak{display:flex;gap:12px;justify-content:center;margin-top:24px;flex-wrap:wrap;}
+.bitem{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 20px;text-align:center;font-family:'DM Mono',monospace;}
+.bval{font-size:22px;font-weight:600;} .blbl{font-size:10px;color:var(--muted2);margin-top:2px;}
+.ract{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:28px;}
+.dlbtn{display:flex;align-items:center;gap:8px;padding:12px 24px;border-radius:10px;border:1px solid var(--border);background:var(--card);color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;cursor:pointer;transition:all .2s;}
+.dlbtn:hover{border-color:var(--accent);color:var(--accent);transform:translateY(-2px);box-shadow:0 4px 12px rgba(124,106,247,.15);}
+.ri{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:24px;margin-bottom:12px;border-left:3px solid var(--border);transition:all .2s;}
+.ri:hover{transform:translateY(-2px);box-shadow:0 4px 12px rgba(0,0,0,.08);}
+.ri.ok{border-left-color:var(--ok);} .ri.bad{border-left-color:var(--err);} .ri.skip{border-left-color:var(--muted);}
+.rhead{display:flex;gap:12px;align-items:flex-start;}
+.rico{font-size:16px;padding-top:2px;flex-shrink:0;}
+.rq{font-size:14px;line-height:1.75;flex:1;}
+.rtags{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;}
+.tag{font-family:'DM Mono',monospace;font-size:11px;padding:3px 10px;border-radius:6px;}
+.tyours{background:rgba(248,113,113,.1);color:var(--err);border:1px solid rgba(248,113,113,.2);}
+.tyours.ok{background:rgba(74,222,128,.1);color:var(--ok);border-color:rgba(74,222,128,.2);}
+.tcorrect{background:rgba(74,222,128,.1);color:var(--ok);border:1px solid rgba(74,222,128,.2);}
+.ttopic{background:rgba(124,106,247,.1);color:var(--accent);border:1px solid rgba(124,106,247,.2);}
+.solbtn{background:none;border:1px solid var(--border);color:var(--muted2);padding:5px 14px;border-radius:7px;font-size:11px;cursor:pointer;font-family:'DM Mono',monospace;margin-top:10px;transition:all .2s;}
+.solbtn:hover{border-color:var(--accent);color:var(--accent);}
+.solbtn.challenge{margin-left:8px;border-color:var(--err);color:var(--err);}
+.solbtn.challenge:hover{background:rgba(248,113,113,.08);}
+.solbox{display:none;margin-top:12px;padding:16px;background:var(--surface);border-radius:10px;font-size:13px;line-height:1.85;color:var(--muted2);border-left:2px solid var(--accent);}
+.solbox.open{display:block;}
+.soloptions{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:16px;}
+.solopt{display:flex;align-items:flex-start;gap:8px;padding:10px;border-radius:8px;background:var(--card2);border:1px solid var(--border2);}
+.solopt.correct{background:rgba(74,222,128,0.1);border-color:rgba(74,222,128,0.3);}
+.solopt.yours{background:rgba(248,113,113,0.1);border-color:rgba(248,113,113,0.3);}
+.soloptkey{font-family:'DM Mono',monospace;font-size:11px;font-weight:600;color:var(--text2);min-width:16px;}
+.soloptval{flex:1;font-size:12px;line-height:1.6;color:var(--text);}
+.solsolution{margin-top:16px;padding-top:16px;border-top:1px solid var(--border2);font-size:13px;line-height:1.7;color:var(--muted2);}
+.summary-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:24px;margin-bottom:24px;}
+.summary-header{font-size:15px;font-weight:600;color:var(--text);margin-bottom:16px;display:flex;align-items:center;gap:8px;}
+:root.light-mode .scard::before{background:radial-gradient(ellipse 80% 60% at 50% 110%,rgba(109,90,214,.08),transparent 60%);}
+
+/* CHAT PANEL */
+#cFab{position:fixed;bottom:24px;right:24px;z-index:10000;width:56px;height:56px;border-radius:50%;border:none;background:var(--accent);color:#fff;font-size:24px;cursor:pointer;box-shadow:0 4px 20px rgba(124,106,247,.5);transition:all .2s;display:flex;align-items:center;justify-content:center;}
+#cFab:hover{transform:scale(1.05);background:#6a58e0;}
+#cUnread{position:absolute;top:-2px;right:-2px;width:18px;height:18px;background:var(--err);border-radius:50%;font-size:10px;display:none;align-items:center;justify-content:center;}
+#cpanel{position:fixed;bottom:90px;right:24px;z-index:10000;width:380px;max-height:500px;background:var(--card);border:1px solid var(--border);border-radius:16px;box-shadow:0 8px 32px rgba(0,0,0,.3);display:flex;flex-direction:column;transform:scale(0);opacity:0;transform-origin:bottom right;transition:all .25s;pointer-events:none;}
+#cpanel.open{transform:scale(1);opacity:1;pointer-events:all;}
+#cpanel .ch{flex-shrink:0;padding:16px 20px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;}
+#cpanel .ct{font-size:15px;font-weight:600;}
+#cpanel .cx{width:28px;height:28px;border-radius:50%;border:none;background:var(--surface);color:var(--text);cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;}
+#cpanel .cx:hover{background:var(--border);}
+#cMsgs{flex:1;overflow-y:auto;padding:16px 20px;max-height:320px;}
+.cmsg{margin-bottom:12px;padding:12px 16px;border-radius:12px;font-size:13px;line-height:1.6;max-width:85%;}
+.cmsg.user{margin-left:auto;background:var(--accent);color:#fff;border-bottom-right-radius:4px;}
+.cmsg.ai{margin-right:auto;background:var(--surface);border:1px solid var(--border);border-bottom-left-radius:4px;}
+.cmsg.typing{color:var(--muted);font-style:italic;}
+.cmsg .cempty{text-align:center;color:var(--muted);font-size:12px;padding:20px;}
+#cInWrap{flex-shrink:0;padding:12px 16px;border-top:1px solid var(--border);display:flex;gap:8px;}
+#cIn{flex:1;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 14px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;resize:none;outline:none;}
+#cIn:focus{border-color:var(--accent);}
+#cSend{width:36px;height:36px;border-radius:10px;border:none;background:var(--accent);color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;}
+#cSend:hover{background:#6a58e0;}
+#cSend svg{width:18px;height:18px;}
+@media(max-width:480px){
+  #cpanel{width:calc(100vw - 32px);right:16px;left:16px;}
+  #cFab{right:16px;bottom:16px;}
+}
+.challenge-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:10001;display:none;align-items:center;justify-content:center;}
+.challenge-overlay.open{display:flex;}
+.challenge-modal{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:28px;max-width:480px;width:90%;max-height:80vh;overflow-y:auto;}
+.challenge-modal h3{font-family:'DM Serif Display',serif;font-size:20px;margin-bottom:16px;color:var(--text);}
+.challenge-modal p{font-size:14px;color:var(--muted2);line-height:1.7;margin-bottom:20px;}
+.challenge-status{display:flex;align-items:center;gap:12px;padding:16px;background:var(--surface);border-radius:10px;margin-bottom:16px;}
+.challenge-status.loading .status-icon{animation:spin 1s linear infinite;}
+.challenge-status.success .status-icon{color:var(--ok);}
+.challenge-status.rejected .status-icon{color:var(--muted);}
+.challenge-status.error .status-icon{color:var(--err);}
+.status-icon{font-size:20px;}
+.status-text{flex:1;font-size:13px;color:var(--text);}
+.challenge-actions{display:flex;gap:10px;justify-content:flex-end;}
+.challenge-actions button{padding:10px 20px;border-radius:8px;border:none;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;cursor:pointer;}
+.challenge-actions .btn-ok{background:var(--accent);color:#fff;}
+.challenge-actions .btn-ok:hover{background:#6a58e0;}
+.challenge-actions .btn-close{background:var(--surface);color:var(--text);border:1px solid var(--border);}
+.challenge-actions .btn-close:hover{border-color:var(--border2);}
+</style>
+</head>
+<body>
+<button id="themeToggle" onclick="toggleTheme()" title="Toggle theme">
+  <span class="theme-icon sun">☀</span>
+  <span class="theme-icon moon">☾</span>
+</button>
+
+<!-- WELCOME PAGE -->
+<section id="welcome">
+  <div class="badge">Mock Exam Platform</div>
+  <h1 class="welcome-title">Mock<br><em>Exam Generator</em></h1>
+  <p class="welcome-sub">AI-powered practice platform for university admissions tests. Choose your exam type to begin.</p>
+  
+  <div class="step-lbl">Select Your Exam</div>
+  <div class="exam-row">
+    <div class="exam-card esat" onclick="selectExam('esat')">
+      <div class="enum">ESAT</div>
+      <div class="ename">Engineering & Science</div>
+      <div class="edesc">Engineering and Science Admissions Test with multiple subject modules</div>
+      <div class="emeta"><span>27 Questions</span><span>40 Minutes</span><span>5 Modules</span></div>
+    </div>
+    <div class="exam-card tmua" onclick="selectExam('tmua')">
+      <div class="enum">TMUA</div>
+      <div class="ename">Test of Mathematics</div>
+      <div class="edesc">Test of Mathematics for University Admission with two papers</div>
+      <div class="emeta"><span>20 Questions</span><span>75 Minutes</span><span>2 Papers</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- HOME PAGE -->
+<section id="home">
+  <button class="back-btn" onclick="goWelcome()">← Back</button>
+  <h1 class="home-title" id="homeTitle">ESAT<br><em>Mock Exam</em></h1>
+  <p class="home-sub" id="homeSub">Engineering and Science Admissions Test · AI-generated based on official syllabus · 27 questions per paper, 40 minutes</p>
+  
+  <div class="step-lbl" id="step1Label">Step 1 — Choose papers (1-3 papers)</div>
+  <div class="module-row" id="esatModules">
+    <div class="module-card math1" onclick="selModule('math1',this)">
+      <div class="mnum">M1</div>
+      <div class="mname">Mathematics 1</div>
+      <div class="mdesc">Algebra, calculus, geometry.</div>
+      <div class="mmeta"><span>27 Qs</span><span>40 min</span><span>Optional</span></div>
+    </div>
+    <div class="module-card math2" onclick="selModule('math2',this)">
+      <div class="mnum">M2</div>
+      <div class="mname">Mathematics 2</div>
+      <div class="mdesc">Advanced mathematics.</div>
+      <div class="mmeta"><span>27 Qs</span><span>40 min</span><span>Optional</span></div>
+    </div>
+    <div class="module-card physics" onclick="selModule('physics',this)">
+      <div class="mnum">P1</div>
+      <div class="mname">Physics</div>
+      <div class="mdesc">Mechanics, electricity, waves.</div>
+      <div class="mmeta"><span>27 Qs</span><span>40 min</span><span>Optional</span></div>
+    </div>
+    <div class="module-card chem" onclick="selModule('chem',this)">
+      <div class="mnum">C1</div>
+      <div class="mname">Chemistry</div>
+      <div class="mdesc">Physical, inorganic, organic.</div>
+      <div class="mmeta"><span>27 Qs</span><span>40 min</span><span>Optional</span></div>
+    </div>
+    <div class="module-card biology" onclick="selModule('biology',this)">
+      <div class="mnum">B1</div>
+      <div class="mname">Biology</div>
+      <div class="mdesc">Cell biology, genetics, ecology.</div>
+      <div class="mmeta"><span>27 Qs</span><span>40 min</span><span>Optional</span></div>
+    </div>
+  </div>
+  
+  <div class="paper-row" id="tmuaPapers" style="display:none;">
+    <div class="paper-card p1" onclick="selPaper('P1',this)">
+      <div class="pnum">P1</div>
+      <div class="pname">Mathematical Knowledge</div>
+      <div class="pdesc">Pure mathematics, algebra, calculus, geometry.</div>
+      <div class="pmeta"><span>20 Qs</span><span>75 min</span></div>
+    </div>
+    <div class="paper-card p2" onclick="selPaper('P2',this)">
+      <div class="pnum">P2</div>
+      <div class="pname">Mathematical Reasoning</div>
+      <div class="pdesc">Logic, proof, problem-solving strategies.</div>
+      <div class="pmeta"><span>20 Qs</span><span>75 min</span></div>
+    </div>
+  </div>
+  
+  <div class="step-lbl">Step 2 — Select difficulty</div>
+  <div class="diff-row">
+    <div class="diff-card easy" onclick="selDiff('easy',this)">
+      <div class="di">🌱</div>
+      <div class="dn">Easy</div>
+      <div class="dh">Warm-up</div>
+    </div>
+    <div class="diff-card medium" onclick="selDiff('medium',this)">
+      <div class="di">⚡</div>
+      <div class="dn">Medium</div>
+      <div class="dh">Exam standard</div>
+    </div>
+    <div class="diff-card hard" onclick="selDiff('hard',this)">
+      <div class="di">🔥</div>
+      <div class="dn">Hard</div>
+      <div class="dh">Challenge</div>
+    </div>
+  </div>
+  
+  <div class="start-btn-container">
+    <button class="start-btn" id="startBtn" onclick="startGenerating()">Generate Exam</button>
+  </div>
+</section>
+
+<!-- GENERATING -->
+<section id="generating">
+  <div class="gen-orb"></div>
+  <div>
+    <div class="gen-title" id="gTitle">Generating your exam…</div>
+    <div class="gen-sub" id="gSub" style="margin-top:4px;">Preparing to generate questions…</div>
+  </div>
+  <div class="gen-bar-wrap">
+    <div class="gen-bar-track"><div class="gen-bar-fill" id="gBar" style="width:0%"></div></div>
+    <div class="gen-pct" id="gPct">0 / 20 questions ready</div>
+  </div>
+  <div class="gen-steps">
+    <div class="gstep active" id="gs0"><div class="gsdot"></div><span>Generating questions</span></div>
+    <div class="gstep" id="gs1"><div class="gsdot"></div><span>Verifying answers</span></div>
+    <div class="gstep" id="gs2"><div class="gsdot"></div><span>Finalizing exam</span></div>
+  </div>
+</section>
+
+<!-- READY -->
+<section id="ready">
+  <div class="ready-icon">✓</div>
+  <div class="ready-stats">
+    <div class="rstat-item">
+      <div class="rstat-num" id="readyQCount">20</div>
+      <div class="rstat-label">Questions</div>
+    </div>
+    <div class="rstat-divider"></div>
+    <div class="rstat-item">
+      <div class="rstat-num" id="readyTime">75</div>
+      <div class="rstat-label">Minutes</div>
+    </div>
+    <div class="rstat-divider"></div>
+    <div class="rstat-item">
+      <div class="rstat-num" id="readyDiff">M</div>
+      <div class="rstat-label">Difficulty</div>
+    </div>
+  </div>
+  <p style="color:var(--muted2);font-size:14px;margin-bottom:32px;text-align:center;" id="readySummary">20 questions · Paper 1 · Medium (0 fixed)</p>
+  
+  <div class="step-lbl">Choose timer mode</div>
+  <div class="diff-row">
+    <div class="diff-card timed" onclick="selTimerMode('timed',this)">
+      <div class="di">⏱</div>
+      <div class="dn">Timed</div>
+      <div class="dh">Exam conditions</div>
+    </div>
+    <div class="diff-card free" onclick="selTimerMode('free',this)">
+      <div class="di">∞</div>
+      <div class="dn">Untimed</div>
+      <div class="dh">Practice mode</div>
+    </div>
+  </div>
+  
+  <div class="start-btn-container">
+    <button class="start-btn" id="startExamBtn" onclick="startExam()">Start Exam</button>
+  </div>
+</section>
+
+<!-- EXAM -->
+<section id="exam">
+  <div class="etop">
+    <div class="einfo">
+      <div class="elbl" id="eLbl">PAPER 1</div>
+      <div class="ehead" id="eHead">Mathematical Knowledge</div>
+      <span class="dpill medium" id="eDiff">Medium</span>
+    </div>
+    <div class="estats">
+      <div class="timer-wrap">
+        <span class="timer-icon">⏱</span>
+        <span class="timer-display" id="timerDisplay">75:00</span>
+      </div>
+      <button class="refresh-math-btn" onclick="refreshMathJax()" title="Refresh formulas">↻</button>
+      <div id="eStat">0 / 20 answered</div>
+    </div>
+  </div>
+  
+  <div class="prog-wrap">
+    <div class="prog-track"><div class="prog-fill" id="pFill" style="width:0%"></div></div>
+    <div class="prog-lbl" id="pLbl">0%</div>
+  </div>
+  
+  <div class="dotgrid" id="dotGrid"></div>
+  
+  <div id="qWrap"></div>
+  
+  <div class="qnav">
+    <button class="btn btn-ghost" onclick="prevQ()">← Previous</button>
+    <button class="btn btn-submit" onclick="submitExam()">Submit Exam</button>
+    <button class="btn btn-prime" onclick="nextQ()">Next →</button>
+  </div>
+</section>
+
+<!-- RESULTS -->
+<section id="results">
+  <div class="rbar">
+    <button class="btn btn-ghost" onclick="goHome()">← Back to Home</button>
+    <div style="display:flex;gap:8px;align-items:center;">
+      <button class="refresh-math-btn" onclick="refreshMathJax()" title="Refresh formulas">↻</button>
+      <button class="dlbtn" onclick="downloadResults()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Download Report
+      </button>
+    </div>
+  </div>
+  
+  <div class="scard">
+    <div class="sbig" id="sBig">0<span>/20</span></div>
+    <div class="scap">Your Score</div>
+    <div class="bpill" id="bPill"><span style="color:#4ade80">Excellent</span></div>
+    <div class="sbreak" id="sBreak">
+      <div class="bitem"><div class="bval" id="bCorrect">0</div><div class="blbl">Correct</div></div>
+      <div class="bitem"><div class="bval" id="bWrong">0</div><div class="blbl">Wrong</div></div>
+      <div class="bitem"><div class="bval" id="bSkipped">0</div><div class="blbl">Skipped</div></div>
+    </div>
+  </div>
+  
+  <div class="summary-card" id="summaryCard">
+    <div class="summary-header">📊 Performance Analysis</div>
+    <div id="summaryContent"></div>
+  </div>
+  
+  <div id="rList"></div>
+</section>
+
+<!-- CHAT FAB -->
+<button id="cFab" onclick="toggleChat()" style="display:none;">
+  <span id="cFabIcon">💬</span>
+  <span id="cUnread">!</span>
+</button>
+<div id="cpanel">
+  <div class="ch">
+    <div class="ct">AI Tutor</div>
+    <button class="cx" onclick="closeChat()">×</button>
+  </div>
+  <div id="cMsgs">
+    <div class="cempty">Ask me anything about the exam questions!</div>
+  </div>
+  <div id="cInWrap">
+    <textarea id="cIn" rows="1" placeholder="Type your question..." onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendChat();}"></textarea>
+    <button id="cSend" onclick="sendChat()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+    </button>
+  </div>
+</div>
+
+<!-- CHALLENGE MODAL -->
+<div id="challengeOverlay" class="challenge-overlay">
+  <div class="challenge-modal">
+    <h3 id="challengeTitle">Question Challenge</h3>
+    <p id="challengeDesc">AI is reviewing your challenge...</p>
+    <div class="challenge-status loading" id="challengeStatus">
+      <span class="status-icon">⏳</span>
+      <span class="status-text" id="challengeStatusText">Analyzing the question...</span>
+    </div>
+    <div id="challengeResult" style="display:none;margin-bottom:16px;padding:14px;background:var(--surface);border-radius:10px;font-size:13px;line-height:1.6;color:var(--text2);"></div>
+    <div class="challenge-actions" style="justify-content:center;">
+      <button class="btn-ok" id="challengeOKBtn" onclick="handleChallengeOK()" style="display:none;">OK</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// API Configuration
+const API_CONFIG = {
+  apiKey: "sk-ucgxtoluqhvjoxbclduttdsatuctdfjykarllprywpozifep",
+  baseUrl: "https://api.siliconflow.cn/v1",
+  modelTurbo: "deepseek-ai/DeepSeek-V3",
+  modelPlus: "deepseek-ai/DeepSeek-V3",
+  modelFast: "Qwen/Qwen2.5-7B-Instruct"
+};
+
+// State
+let currentExam = null; // 'esat' or 'tmua'
+let selectedModules = [];
+let selectedPaper = null;
+let diff = null;
+let timerMode = null;
+let qs = [];
+let ans = {};
+let curQ = 0;
+let timerInterval = null;
+let timerSecs = 0;
+let questionTimes = {};
+let questionStartTime = null;
+let chatOpen = false;
+let chatHist = [];
+let chatCtx = '';
+let questionChallenges = {}; // 存储用户对题目的质疑 {qIdx: {customOption: string, reason: string, selected: boolean}}
+let correctedQuestions = {}; // 存储被AI修正的题目 {qIdx: {correct_index: number, solution: string, reason: string}}
+
+// Constants
+const EXAM_CONFIG = {
+  esat: {
+    title: 'ESAT',
+    subtitle: 'Engineering and Science Admissions Test',
+    questionsPerModule: 27,
+    timePerModule: 40,
+    totalQuestions: 27,
+    modules: ['math1', 'math2', 'physics', 'chem', 'biology']
+  },
+  tmua: {
+    title: 'TMUA',
+    subtitle: 'Test of Mathematics for University Admission',
+    questionsPerPaper: 20,
+    timePerPaper: 75,
+    totalQuestions: 20,
+    papers: ['P1', 'P2']
+  }
+};
+
+// Theme
+function toggleTheme(){
+  document.documentElement.classList.toggle('light-mode');
+  localStorage.setItem('theme', document.documentElement.classList.contains('light-mode') ? 'light' : 'dark');
+}
+
+if(localStorage.getItem('theme') === 'light'){
+  document.documentElement.classList.add('light-mode');
+}
+
+// Navigation
+function showSec(id){
+  // 首先让所有页面淡出
+  const sections = ['welcome', 'home', 'generating', 'ready', 'exam', 'results'];
+  let activeSection = null;
+  
+  sections.forEach(s => {
+    const e = document.getElementById(s);
+    if(e) {
+      if(e.style.display !== 'none') {
+        activeSection = e;
+      }
+      e.style.transition = 'opacity 0.3s ease-in-out';
+      e.style.opacity = '0';
+    }
+  });
+  
+  // 等待淡出完成后显示新页面
+  setTimeout(() => {
+    // 隐藏所有页面
+    sections.forEach(s => {
+      const e = document.getElementById(s);
+      if(e) e.style.display = 'none';
+    });
+    
+    // 显示目标页面并淡入
+    const el = document.getElementById(id);
+    if(el) {
+      el.style.display = (id === 'generating' || id === 'ready' || id === 'welcome' || id === 'home') ? 'flex' : 'block';
+      el.style.transition = 'opacity 0.3s ease-in-out';
+      el.style.opacity = '0';
+      
+      // 触发重排
+      el.offsetHeight;
+      
+      // 淡入
+      el.style.opacity = '1';
+    }
+  }, 300);
+}
+
+// Welcome Page
+function selectExam(type){
+  currentExam = type;
+  document.querySelectorAll('.exam-card').forEach(c => c.classList.remove('sel'));
+  document.querySelector(`.exam-card.${type}`).classList.add('sel');
+  
+  setTimeout(() => {
+    setupHomePage();
+    showSec('home');
+  }, 300);
+}
+
+function setupHomePage(){
+  const config = EXAM_CONFIG[currentExam];
+  document.getElementById('homeTitle').innerHTML = `${config.title}<br><em>Mock Exam</em>`;
+  document.getElementById('homeSub').textContent = `${config.subtitle} · AI-generated based on official syllabus`;
+  
+  if(currentExam === 'esat'){
+    document.getElementById('esatModules').style.display = 'flex';
+    document.getElementById('tmuaPapers').style.display = 'none';
+    document.getElementById('step1Label').textContent = 'Step 1 — Choose papers (1-3 papers)';
+    document.getElementById('homeSub').textContent += ` · ${config.questionsPerModule} questions per paper, ${config.timePerModule} minutes`;
+  } else {
+    document.getElementById('esatModules').style.display = 'none';
+    document.getElementById('tmuaPapers').style.display = 'flex';
+    document.getElementById('step1Label').textContent = 'Step 1 — Choose paper';
+    document.getElementById('homeSub').textContent += ` · ${config.questionsPerPaper} questions per paper, ${config.timePerPaper} minutes`;
+  }
+}
+
+function goWelcome(){
+  resetState();
+  showSec('welcome');
+  document.getElementById('cFab').style.display = 'none';
+}
+
+function goHome(){
+  resetState();
+  showSec('home');
+  document.getElementById('cFab').style.display = 'none';
+}
+
+function resetState(){
+  ans = {};
+  curQ = 0;
+  qs = [];
+  questionTimes = {};
+  stopTimer();
+  timerSecs = 0;
+  timerMode = null;
+  selectedModules = [];
+  selectedPaper = null;
+  document.querySelectorAll('.module-card, .paper-card').forEach(c => c.classList.remove('sel'));
+  document.querySelectorAll('.diff-card').forEach(c => c.classList.remove('sel'));
+  diff = null;
+  document.getElementById('startBtn').classList.remove('ready');
+  document.getElementById('startExamBtn').classList.remove('ready');
+  document.getElementById('cFab').style.display = 'none';
+  chatHist = [];
+  chatCtx = '';
+  questionChallenges = {};
+  correctedQuestions = {};
+  closeChat();
+}
+
+// ESAT Module Selection
+function selModule(mod, el){
+  if(currentExam !== 'esat') return;
+  const idx = selectedModules.indexOf(mod);
+  if(idx > -1){
+    selectedModules.splice(idx, 1);
+    el.classList.remove('sel');
+  }else{
+    if(selectedModules.length >= 3){
+      alert('You can select a maximum of 3 papers');
+      return;
+    }
+    selectedModules.push(mod);
+    el.classList.add('sel');
+  }
+  chkReady();
+}
+
+// TMUA Paper Selection
+function selPaper(paper, el){
+  if(currentExam !== 'tmua') return;
+  selectedPaper = paper;
+  document.querySelectorAll('.paper-card').forEach(c => c.classList.remove('sel'));
+  el.classList.add('sel');
+  chkReady();
+}
+
+// Difficulty Selection
+function selDiff(d, el){
+  diff = d;
+  document.querySelectorAll('#home .diff-card').forEach(c => c.classList.remove('sel'));
+  el.classList.add('sel');
+  chkReady();
+}
+
+function chkReady(){
+  const b = document.getElementById('startBtn');
+  if(currentExam === 'esat'){
+    if(selectedModules.length > 0 && diff){
+      b.classList.add('ready');
+    }else{
+      b.classList.remove('ready');
+    }
+  }else{
+    if(selectedPaper && diff){
+      b.classList.add('ready');
+    }else{
+      b.classList.remove('ready');
+    }
+  }
+}
+
+// Timer Mode Selection
+function selTimerMode(mode, el){
+  timerMode = mode;
+  document.querySelectorAll('#ready .diff-card').forEach(c => c.classList.remove('sel'));
+  el.classList.add('sel');
+  chkExamReady();
+}
+
+function chkExamReady(){
+  const b = document.getElementById('startExamBtn');
+  if(timerMode){
+    b.classList.add('ready');
+  }else{
+    b.classList.remove('ready');
+  }
+}
+
+// Generation
+async function startGenerating(){
+  if(currentExam === 'esat' && selectedModules.length === 0) return;
+  if(currentExam === 'tmua' && !selectedPaper) return;
+  if(!diff) return;
+  
+  showSec('generating');
+  setGStep(0, 'active');
+  setGStep(1, '');
+  setGStep(2, '');
+  
+  qs = [];
+  ans = {};
+  curQ = 0;
+  
+  const config = EXAM_CONFIG[currentExam];
+  const totalQ = currentExam === 'esat' ? config.totalQuestions : config.totalQuestions;
+  
+  // 1. 先按题型生成所有题目（只生成题目，不渲染）
+  document.getElementById('gTitle').textContent = 'Generating questions by topic…';
+  setGBar(0, totalQ, 'Preparing to generate questions');
+  
+  const questions = [];
+  const topicCounts = {};
+  
+  // 获取所有题型并确保每个题型至少生成一定数量的题目
+  let allTopics = [];
+  if(currentExam === 'esat'){
+    const mod = selectedModules[0];
+    const topics = {
+      math1: ['algebra','coordinate geometry','statistics and probability','trigonometry','sequences and series','functions','unit conversion','ratio and proportion'],
+      math2: ['calculus','sequences and series','trigonometry','proofs','derivatives','integration','applications of calculus'],
+      physics: ['mechanics','electricity','waves','thermodynamics','modern physics','materials','experimental data analysis','newton laws','energy conservation','circuit analysis'],
+      chem: ['organic chemistry','inorganic chemistry','reaction rates and energetics','atomic structure','bonding','stoichiometry','kinetics','equilibria','reaction mechanisms'],
+      biology: ['cell biology','genetics','ecology','physiology','evolution','biotechnology','data interpretation and graphing','DNA replication','cellular organelles']
+    };
+    allTopics = topics[mod] || [];
+  }else{
+    const p1Topics = ['algebra','coordinate geometry','calculus','trigonometry','sequences and series','functions','graphs','exponentials and logarithms'];
+    const p2Topics = ['logic','proof techniques','number theory','counting','inequalities','mathematical reasoning','identifying proof errors','mathematical arguments','logical connectives'];
+    allTopics = selectedPaper === 'P1' ? p1Topics : p2Topics;
+  }
+  
+  // 计算每个题型应该生成的题目数量
+  const questionsPerTopic = Math.max(1, Math.floor(totalQ / allTopics.length));
+  let generatedCount = 0;
+  
+  // 按题型生成题目
+  for(let topicIdx = 0; topicIdx < allTopics.length && generatedCount < totalQ; topicIdx++){
+    const topic = allTopics[topicIdx];
+    const questionsForThisTopic = Math.min(questionsPerTopic, totalQ - generatedCount);
+    
+    for(let qNum = 1; qNum <= questionsForThisTopic; qNum++){
+      document.getElementById('gTitle').textContent = `Generating ${topic} questions (${generatedCount + qNum}/${totalQ})…`;
+      setGBar(generatedCount + qNum, totalQ, `${generatedCount + qNum} / ${totalQ} questions ready`);
+      
+      try{
+        const q = await generateSingleQuestionByTopic(generatedCount + qNum, topic, questions);
+        if(q){
+          questions.push(q);
+          generatedCount++;
+        }else{
+          qNum--;
+        }
+      }catch(e){
+        console.error(`${topic} Q${generatedCount + qNum} failed:`, e);
+        qNum--;
+      }
+    }
+  }
+  
+  // 如果还有剩余题目，随机生成补充
+  while(generatedCount < totalQ){
+    document.getElementById('gTitle').textContent = `Generating additional questions (${generatedCount + 1}/${totalQ})…`;
+    setGBar(generatedCount + 1, totalQ, `${generatedCount + 1} / ${totalQ} questions ready`);
+    
+    try{
+      const q = await generateSingleQuestion(generatedCount + 1, questions);
+      if(q){
+        questions.push(q);
+        generatedCount++;
+      }
+    }catch(e){
+      console.error(`Additional Q${generatedCount + 1} failed:`, e);
+    }
+  }
+  
+  // 2. 打乱题目顺序（在渲染前统一打乱）
+  setGStep(0, 'done');
+  setGStep(1, 'active');
+  
+  document.getElementById('gTitle').textContent = 'Shuffling questions…';
+  setGBar(0, totalQ, 'Randomizing question order');
+  
+  // Fisher-Yates 洗牌算法打乱题目顺序
+  for(let i = questions.length - 1; i > 0; i--){
+    const j = Math.floor(Math.random() * (i + 1));
+    [questions[i], questions[j]] = [questions[j], questions[i]];
+  }
+  
+  // 重新分配题目编号
+  questions.forEach((q, idx) => {
+    q.number = idx + 1;
+  });
+  
+  // 3. 检查题目
+  document.getElementById('gTitle').textContent = 'Checking questions…';
+  setGBar(0, totalQ, 'Verifying questions');
+  
+  // 统一赋值给全局变量
+  qs = questions;
+  
+  // 验证和修复题目
+  const fixedCount = await validateAndFixAllQuestions();
+  
+  setGStep(1, 'done');
+  setGStep(2, 'active');
+  
+  document.getElementById('gTitle').textContent = 'Exam generated!';
+  document.getElementById('gBar').style.width = '100%';
+  
+  // 3. 统一设置准备页面
+  const timeLimit = currentExam === 'esat' ? config.timePerModule : config.timePerPaper;
+  document.getElementById('readyQCount').textContent = totalQ;
+  document.getElementById('readyTime').textContent = timeLimit;
+  document.getElementById('readyDiff').textContent = diff.charAt(0).toUpperCase();
+  
+  let summaryText = '';
+  if(currentExam === 'esat'){
+    const modNames = {math1:'Mathematics 1',math2:'Mathematics 2',physics:'Physics',chem:'Chemistry',biology:'Biology'};
+    summaryText = `${totalQ} questions · ${modNames[selectedModules[0]]} · ${diff.charAt(0).toUpperCase() + diff.slice(1)} (${fixedCount} fixed)`;
+  }else{
+    const pNames = {P1:'Mathematical Knowledge',P2:'Mathematical Reasoning'};
+    summaryText = `${totalQ} questions · ${selectedPaper} (${pNames[selectedPaper]}) · ${diff.charAt(0).toUpperCase() + diff.slice(1)} (${fixedCount} fixed)`;
+  }
+  document.getElementById('readySummary').textContent = summaryText;
+  
+  setTimeout(() => {
+    setGStep(2, 'done');
+    showSec('ready');
+    document.getElementById('cFab').style.display = 'none';
+  }, 500);
+}
+
+function setGBar(n, total, status){
+  const p = Math.round(Math.min(n, total) / total * 100);
+  document.getElementById('gBar').style.width = p + '%';
+  document.getElementById('gPct').textContent = status;
+}
+
+function setGStep(i, st){
+  const e = document.getElementById('gs' + i);
+  if(e) e.className = 'gstep ' + st;
+}
+
+// Prompt Generation
+function mkPromptSingle(qNum, existing){
+  const config = EXAM_CONFIG[currentExam];
+  
+  if(currentExam === 'esat'){
+    const mod = selectedModules[0];
+    return mkESATPrompt(mod, diff, qNum, existing);
+  }else{
+    return mkTMUAPrompt(selectedPaper, diff, qNum, existing);
+  }
+}
+
+function mkPromptByTopic(topic, difficulty, qNum, existing){
+  const config = EXAM_CONFIG[currentExam];
+  
+  if(currentExam === 'esat'){
+    const mod = selectedModules[0];
+    return mkESATPromptByTopic(mod, topic, difficulty, qNum, existing);
+  }else{
+    return mkTMUAPromptByTopic(selectedPaper, topic, difficulty, qNum, existing);
+  }
+}
+
+function mkESATPromptByTopic(module, topic, difficulty, qNum, existing){
+  const modNames = {math1:'Mathematics 1',math2:'Mathematics 2',physics:'Physics',chem:'Chemistry',biology:'Biology'};
+  
+  const diffDesc = {
+    easy: 'Accessible (single concept, minimal calculation)',
+    medium: 'Medium (Exam-standard ESAT, multi-step, plausible distractors)',
+    hard: 'Hard (Challenging ESAT+, requires insight, counterintuitive)'
+  };
+  
+  const existingQs = existing.map(q => q.question?.substring(0, 50)).join('; ');
+  
+  return `You are an expert ESAT exam question writer. Generate Question ${qNum} of 27.
+
+MODULE: ${modNames[module]}
+DIFFICULTY: ${diffDesc[difficulty]}
+TOPIC: ${topic}
+
+REQUIREMENTS:
+- 5 multiple choice options (A-E)
+- Only ONE correct answer
+- Include step-by-step solution
+- Use LaTeX for math: $...$ inline, $$...$$ display
+- Avoid similarity to existing questions: ${existingQs}
+
+CRITICAL INSTRUCTIONS:
+- OUTPUT ONLY JSON object
+- NO extra text before or after JSON
+- NO explanations or comments
+- Ensure valid JSON format
+- Use double quotes for all strings
+- Escape special characters properly
+- Do NOT include any markdown formatting
+
+OUTPUT FORMAT (JSON only):
+{
+  "number": ${qNum},
+  "topic": "${topic}",
+  "question": "question text with LaTeX",
+  "options": ["A", "B", "C", "D", "E"],
+  "correct_index": 0-4,
+  "solution": "step-by-step solution"
+}`;
+}
+
+function mkTMUAPromptByTopic(paper, topic, difficulty, qNum, existing){
+  const pNames = {P1:'Mathematical Knowledge',P2:'Mathematical Reasoning'};
+  
+  const diffDesc = {
+    easy: 'Accessible (single concept, minimal calculation)',
+    medium: 'Medium (Exam-standard TMUA, multi-step, plausible distractors)',
+    hard: 'Hard (Challenging TMUA+, requires insight, counterintuitive)'
+  };
+  
+  const existingQs = existing.map(q => q.question?.substring(0, 50)).join('; ');
+  
+  return `You are an expert TMUA exam question writer. Generate Question ${qNum} of 20.
+
+PAPER: ${paper} (${pNames[paper]})
+DIFFICULTY: ${diffDesc[difficulty]}
+TOPIC: ${topic}
+
+REQUIREMENTS:
+- 5 multiple choice options (A-E)
+- Only ONE correct answer
+- Include step-by-step solution
+- Use LaTeX for math: $...$ inline, $$...$$ display
+- NO calculators allowed - keep calculations reasonable
+- Avoid similarity to existing questions: ${existingQs}
+
+CRITICAL INSTRUCTIONS:
+- OUTPUT ONLY JSON object
+- NO extra text before or after JSON
+- NO explanations or comments
+- Ensure valid JSON format
+- Use double quotes for all strings
+- Escape special characters properly
+- Do NOT include any markdown formatting
+
+OUTPUT FORMAT (JSON only):
+{
+  "number": ${qNum},
+  "topic": "${topic}",
+  "question": "question text with LaTeX",
+  "options": ["A", "B", "C", "D", "E"],
+  "correct_index": 0-4,
+  "solution": "step-by-step solution"
+}`;
+}
+
+// Question Generation
+async function generateSingleQuestionByTopic(qNum, topic, existing, retries = 0){
+  const prompt = mkPromptByTopic(topic, diff, qNum, existing);
+  
+  try{
+    const raw = await callAI(prompt, 4000, false, false);
+    const q = tryParseJSON(raw);
+    if(!q) throw new Error('Failed to parse JSON');
+    return q;
+  }catch(e){
+    console.error(`Q${qNum} (${topic}) generation failed:`, e);
+    if(retries < 2){
+      return generateSingleQuestionByTopic(qNum, topic, existing, retries + 1);
+    }
+    return null;
+  }
+}
+
+function mkESATPrompt(module, difficulty, qNum, existing){
+  const topics = {
+    math1: ['algebra','coordinate geometry','statistics and probability','trigonometry','sequences and series','functions','unit conversion','ratio and proportion'],
+    math2: ['calculus','sequences and series','trigonometry','proofs','derivatives','integration','applications of calculus'],
+    physics: ['mechanics','electricity','waves','thermodynamics','modern physics','materials','experimental data analysis','newton laws','energy conservation','circuit analysis'],
+    chem: ['organic chemistry','inorganic chemistry','reaction rates and energetics','atomic structure','bonding','stoichiometry','kinetics','equilibria','reaction mechanisms'],
+    biology: ['cell biology','genetics','ecology','physiology','evolution','biotechnology','data interpretation and graphing','DNA replication','cellular organelles']
+  };
+  
+  const modNames = {math1:'Mathematics 1',math2:'Mathematics 2',physics:'Physics',chem:'Chemistry',biology:'Biology'};
+  const topicList = topics[module];
+  const topic = topicList[Math.floor(Math.random() * topicList.length)];
+  
+  const diffDesc = {
+    easy: 'Accessible (single concept, minimal calculation)',
+    medium: 'Medium (Exam-standard ESAT, multi-step, plausible distractors)',
+    hard: 'Hard (Challenging ESAT+, requires insight, counterintuitive)'
+  };
+  
+  const existingQs = existing.map(q => q.question?.substring(0, 50)).join('; ');
+  
+  return `You are an expert ESAT exam question writer. Generate Question ${qNum} of 27.
+
+MODULE: ${modNames[module]}
+DIFFICULTY: ${diffDesc[difficulty]}
+TOPIC: ${topic}
+
+REQUIREMENTS:
+- 5 multiple choice options (A-E)
+- Only ONE correct answer
+- Include step-by-step solution
+- Use LaTeX for math: $...$ inline, $$...$$ display
+- Avoid similarity to existing questions: ${existingQs}
+
+CRITICAL INSTRUCTIONS:
+- OUTPUT ONLY the JSON object
+- NO extra text before or after the JSON
+- NO explanations or comments
+- Ensure valid JSON format
+- Use double quotes for all strings
+- Escape special characters properly
+- Do NOT include any markdown formatting
+
+OUTPUT FORMAT (JSON only):
+{
+  "number": ${qNum},
+  "topic": "${topic}",
+  "question": "question text with LaTeX",
+  "options": ["A", "B", "C", "D", "E"],
+  "correct_index": 0-4,
+  "solution": "step-by-step solution"
+}`;
+}
+
+function mkTMUAPrompt(paper, difficulty, qNum, existing){
+  const p1Topics = ['algebra','coordinate geometry','calculus','trigonometry','sequences and series','functions','graphs','exponentials and logarithms'];
+  const p2Topics = ['logic','proof techniques','number theory','counting','inequalities','mathematical reasoning','identifying proof errors','mathematical arguments','logical connectives'];
+  
+  const topics = paper === 'P1' ? p1Topics : p2Topics;
+  const topic = topics[Math.floor(Math.random() * topics.length)];
+  
+  const diffDesc = {
+    easy: 'Accessible (single concept, minimal calculation)',
+    medium: 'Medium (Exam-standard TMUA, multi-step, plausible distractors)',
+    hard: 'Hard (Challenging TMUA+, requires insight, counterintuitive)'
+  };
+  
+  const existingQs = existing.map(q => q.question?.substring(0, 50)).join('; ');
+  
+  return `You are an expert TMUA exam question writer. Generate Question ${qNum} of 20.
+
+PAPER: ${paper} (${paper === 'P1' ? 'Mathematical Knowledge' : 'Mathematical Reasoning'})
+DIFFICULTY: ${diffDesc[difficulty]}
+TOPIC: ${topic}
+
+REQUIREMENTS:
+- 5 multiple choice options (A-E)
+- Only ONE correct answer
+- Include step-by-step solution
+- Use LaTeX for math: $...$ inline, $$...$$ display
+- NO calculators allowed - keep calculations reasonable
+- Avoid similarity to existing questions: ${existingQs}
+
+CRITICAL INSTRUCTIONS:
+- OUTPUT ONLY the JSON object
+- NO extra text before or after the JSON
+- NO explanations or comments
+- Ensure valid JSON format
+- Use double quotes for all strings
+- Escape special characters properly
+- Do NOT include any markdown formatting
+
+OUTPUT FORMAT (JSON only):
+{
+  "number": ${qNum},
+  "topic": "${topic}",
+  "question": "question text with LaTeX",
+  "options": ["A", "B", "C", "D", "E"],
+  "correct_index": 0-4,
+  "solution": "step-by-step solution"
+}`;
+}
+
+// API Call
+async function callAI(prompt, maxTok = 4000, usePlus = false, useFast = false){
+  const url = `${API_CONFIG.baseUrl}/chat/completions`;
+  let model;
+  if(useFast){
+    model = API_CONFIG.modelFast;
+  }else{
+    model = usePlus ? API_CONFIG.modelPlus : API_CONFIG.modelTurbo;
+  }
+  
+  console.log('Calling AI:', model, 'prompt length:', prompt.length);
+  
+  const r = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": "Bearer " + API_CONFIG.apiKey
+    },
+    body: JSON.stringify({
+      model: model,
+      max_tokens: maxTok,
+      stream: true,
+      messages: [{ role: "user", content: prompt }]
+    })
+  });
+  
+  if(!r.ok){
+    const t = await r.text();
+    throw new Error(`HTTP ${r.status}: ${t.slice(0, 200)}`);
+  }
+  
+  const reader = r.body.getReader();
+  const decoder = new TextDecoder();
+  let txt = '';
+  
+  while(true){
+    const { done, value } = await reader.read();
+    if(done) break;
+    
+    const chunk = decoder.decode(value, { stream: true });
+    const lines = chunk.split('\n');
+    
+    for(const line of lines){
+      if(line.startsWith('data: ')){
+        const data = line.slice(6);
+        if(data === '[DONE]') continue;
+        
+        try{
+          const json = JSON.parse(data);
+          if(json.choices && json.choices[0] && json.choices[0].delta && json.choices[0].delta.content){
+            txt += json.choices[0].delta.content;
+          }
+        }catch(e){}
+      }
+    }
+  }
+  
+  if(!txt){
+    throw new Error('Empty response from API');
+  }
+  
+  return txt;
+}
+
+// JSON Parsing
+function tryParseJSON(text){
+  if(!text) return null;
+  
+  console.log('Raw AI output:', text.substring(0, 200) + '...');
+  
+  // Clean text first
+  let cleanText = text.trim()
+    .replace(/^[\s\S]*?\{/, '{') // Remove everything before first {  
+    .replace(/\}[\s\S]*$/, '}') // Remove everything after last }
+    .replace(/\n/g, ' ') // Replace newlines with spaces
+    .replace(/\s+/g, ' '); // Remove extra spaces
+  
+  // Method 1: Direct parse
+  try{
+    const result = JSON.parse(cleanText);
+    console.log('Direct parse success');
+    return result;
+  }catch(e){
+    console.log('Direct parse failed:', e.message);
+  }
+  
+  // Method 2: Extract from markdown
+  const markdownMatch = text.match(/```json[\s\S]*?```/);
+  if(markdownMatch){
+    try{
+      const mdContent = markdownMatch[0].replace(/```json|```/g, '').trim();
+      const result = JSON.parse(mdContent);
+      console.log('Markdown parse success');
+      return result;
+    }catch(e){
+      console.log('Markdown parse failed:', e.message);
+    }
+  }
+  
+  // Method 3: Extract JSON object
+  const jsonMatch = text.match(/\{[\s\S]*\}/);
+  if(jsonMatch){
+    try{
+      const result = JSON.parse(jsonMatch[0]);
+      console.log('JSON object extract success');
+      return result;
+    }catch(e){
+      console.log('JSON object extract failed:', e.message);
+    }
+  }
+  
+  // Method 4: Try to fix common JSON issues
+  try{
+    const fixedText = cleanText
+      .replace(/([^\\])'/g, '$1"') // Replace single quotes with double quotes
+      .replace(/\"/g, '"') // Fix escaped quotes
+      .replace(/([{,\[]\s*)([^"\\{\[,\s]\w*)/g, '$1"$2"') // Quote unquoted keys
+      .replace(/\s*:\s*/g, ':') // Remove spaces around colons
+      .replace(/\s*,\s*/g, ',') // Remove spaces around commas
+      .replace(/([^\\])\\n/g, '$1 '); // Remove newline escapes
+    
+    const result = JSON.parse(fixedText);
+    console.log('Fixed JSON parse success');
+    return result;
+  }catch(e){
+    console.log('Fixed JSON parse failed:', e.message);
+  }
+  
+  // Method 5: Very aggressive cleanup for Qwen model
+  try{
+    let qwenText = text
+      .replace(/^[^\{]*\{/, '{') // Remove everything before first {
+      .replace(/\}[^\}]*$/, '}') // Remove everything after last }
+      .replace(/[\r\n]/g, ' ') // Remove all newlines
+      .replace(/\s+/g, ' ') // Normalize spaces
+      .replace(/\\u[0-9a-fA-F]{4}/g, '') // Remove unicode escapes
+      .replace(/([^\\])'/g, '$1"') // Replace single quotes
+      .replace(/\"/g, '"') // Fix escaped quotes
+      .replace(/\\\n/g, ' ') // Fix newline escapes
+      .replace(/\\\t/g, ' ') // Fix tab escapes
+      .replace(/\\\\/g, '\\') // Fix double backslashes
+      .replace(/\\\$/g, '$') // Fix dollar sign escapes
+      .replace(/\\\}/g, '}') // Fix closing brace escapes
+      .replace(/\\\{/g, '{'); // Fix opening brace escapes
+    
+    // Fix unquoted keys
+    qwenText = qwenText.replace(/([{,\[]\s*)([^"\\{\[,\s]\w+)(\s*:)/g, '$1"$2"$3');
+    
+    // Fix trailing commas
+    qwenText = qwenText.replace(/,\s*([}\]])/g, '$1');
+    
+    const result = JSON.parse(qwenText);
+    console.log('Qwen-specific parse success');
+    return result;
+  }catch(e){
+    console.log('Qwen-specific parse failed:', e.message);
+  }
+  
+  // Method 6: Emergency fallback - manual reconstruction
+  try{
+    console.log('Attempting emergency fallback parse');
+    
+    // Extract basic fields manually
+    const numberMatch = text.match(/"number"\s*:\s*(\d+)/);
+    const topicMatch = text.match(/"topic"\s*:\s*"([^"]+)"/);
+    const questionMatch = text.match(/"question"\s*:\s*"([\s\S]*?)"\s*,\s*"options"/);
+    const optionsMatch = text.match(/"options"\s*:\s*\[(\s*"[^"]*"\s*,?\s*)*\]/);
+    const correctIndexMatch = text.match(/"correct_index"\s*:\s*(\d+)/);
+    const solutionMatch = text.match(/"solution"\s*:\s*"([\s\S]*?)"\s*\}/);
+    
+    if(numberMatch && topicMatch && questionMatch && optionsMatch && correctIndexMatch && solutionMatch){
+      const number = parseInt(numberMatch[1]);
+      const topic = topicMatch[1];
+      let question = questionMatch[1].replace(/\\"/g, '"').replace(/\\n/g, ' ');
+      let optionsStr = optionsMatch[0];
+      const correctIndex = parseInt(correctIndexMatch[1]);
+      let solution = solutionMatch[1].replace(/\\"/g, '"').replace(/\\n/g, ' ');
+      
+      // Parse options
+      let options = [];
+      try{
+        options = JSON.parse(optionsStr);
+      }catch{
+        // Manual option parsing
+        const optionMatches = optionsStr.match(/"([^"]+)"/g);
+        if(optionMatches){
+          options = optionMatches.map(opt => opt.replace(/"/g, ''));
+        }
+      }
+      
+      if(options.length === 5){
+        const result = {
+          number: number,
+          topic: topic,
+          question: question,
+          options: options,
+          correct_index: correctIndex,
+          solution: solution
+        };
+        console.log('Emergency fallback parse success');
+        return result;
+      }
+    }
+  }catch(e){
+    console.log('Emergency fallback failed:', e.message);
+  }
+  
+  console.log('All parsing methods failed');
+  return null;
+}
+
+// Question Generation
+async function generateSingleQuestion(qNum, existing, retries = 0){
+  const prompt = mkPromptSingle(qNum, existing);
+  
+  try{
+    const raw = await callAI(prompt, 4000, false, false); // 使用 DeepSeek 模型
+    const q = tryParseJSON(raw);
+    if(!q) throw new Error('Failed to parse JSON');
+    return q;
+  }catch(e){
+    console.error(`Q${qNum} generation failed:`, e);
+    if(retries < 2){
+      return generateSingleQuestion(qNum, existing, retries + 1);
+    }
+    return null;
+  }
+}
+
+// Validation
+function validateQuestion(q){
+  const errors = [];
+  
+  if(!q || typeof q !== 'object'){
+    return {valid: false, errors: ['Not an object']};
+  }
+  
+  if(!q.question || q.question.trim().length < 10){
+    errors.push('Question text too short');
+  }
+  
+  if(!Array.isArray(q.options) || q.options.length !== 5){
+    errors.push('Options must be array of 5');
+  }else{
+    q.options.forEach((opt, i) => {
+      if(!opt || opt.trim().length === 0){
+        errors.push(`Option ${String.fromCharCode(65+i)} empty`);
+      }
+    });
+  }
+  
+  if(typeof q.correct_index !== 'number' || q.correct_index < 0 || q.correct_index > 4){
+    errors.push('correct_index must be 0-4');
+  }
+  
+  if(!q.solution || q.solution.trim().length < 20){
+    errors.push('Solution too short');
+  }
+  
+  return {valid: errors.length === 0, errors};
+}
+
+async function verifyQuestionWithAI(q, qNum){
+  const L = ['A','B','C','D','E'];
+  const verifyPrompt = `You are a STRICT exam question verifier.
+
+QUESTION ${qNum}:
+${q.question}
+
+Options:
+A. ${q.options[0]}
+B. ${q.options[1]}
+C. ${q.options[2]}
+D. ${q.options[3]}
+E. ${q.options[4]}
+
+Stated Answer: ${L[q.correct_index]}
+Solution: ${q.solution}
+
+SOLVE THIS PROBLEM YOURSELF. Is the stated answer correct?
+
+Reply with JSON only:
+{"verified": true/false, "correctAnswer": "A/B/C/D/E", "explanation": "brief explanation"}`;
+
+  try{
+    const raw = await callAI(verifyPrompt, 2000, true);
+    const parsed = tryParseJSON(raw);
+    if(!parsed) return {verified: true};
+    return parsed;
+  }catch(e){
+    return {verified: true};
+  }
+}
+
+async function fixQuestionWithAI(q, qNum, verification){
+  const L = ['A','B','C','D','E'];
+  const currentAnswer = L[q.correct_index];
+  const correctAnswer = verification.correctAnswer || 'unknown';
+  
+  const fixPrompt = `You are an expert exam question editor. Fix this question so the correct answer is ${correctAnswer}.
+
+ORIGINAL QUESTION ${qNum}:
+Topic: ${q.topic || 'General'}
+Question: ${q.question}
+
+Current Options:
+A. ${q.options[0]}
+B. ${q.options[1]}
+C. ${q.options[2]}
+D. ${q.options[3]}
+E. ${q.options[4]}
+
+Current correct answer: ${currentAnswer} (index ${q.correct_index})
+Verified correct answer: ${correctAnswer}
+
+YOUR TASK:
+1. If option ${correctAnswer} already contains the correct mathematical answer, just update correct_index to ${correctAnswer.charCodeAt(0) - 65} and keep everything else the same.
+2. If option ${correctAnswer} is wrong, you may swap options to make ${correctAnswer} correct, then update correct_index accordingly.
+3. Update the solution to clearly explain why ${correctAnswer} is correct.
+4. Keep the question text and topic unchanged unless there's an error.
+
+OUTPUT FORMAT - Return ONLY valid JSON:
+{
+  "number": ${qNum},
+  "topic": "${q.topic || 'General'}",
+  "question": "question text",
+  "options": ["A", "B", "C", "D", "E"],
+  "correct_index": ${correctAnswer.charCodeAt(0) - 65},
+  "solution": "step-by-step solution explaining why ${correctAnswer} is correct"
+}
+
+IMPORTANT:
+- Use proper JSON escaping
+- correct_index MUST be ${correctAnswer.charCodeAt(0) - 65} (for answer ${correctAnswer})
+- Solution must be complete and correct`;
+
+  try{
+    console.log(`Q${qNum}: Attempting to fix answer from ${currentAnswer} to ${correctAnswer}`);
+    const raw = await callAI(fixPrompt, 3000, true);
+    const fixed = tryParseJSON(raw);
+    
+    // 验证修复结果
+    if(fixed && 
+       Array.isArray(fixed.options) && 
+       fixed.options.length === 5 &&
+       typeof fixed.correct_index === 'number' &&
+       fixed.correct_index >= 0 && 
+       fixed.correct_index <= 4){
+      
+      const newAnswer = L[fixed.correct_index];
+      console.log(`Q${qNum}: Fixed successfully. Answer is now ${newAnswer}`);
+      return fixed;
+    }else{
+      console.warn(`Q${qNum}: Fix returned invalid structure`);
+      return null;
+    }
+  }catch(e){
+    console.error(`Q${qNum}: Fix failed with error:`, e);
+    return null;
+  }
+}
+
+async function validateAndFixAllQuestions(){
+  document.getElementById('gTitle').textContent = 'Validating questions…';
+  
+  let fixedCount = 0;
+  
+  // 验证题型覆盖
+  document.getElementById('gSub').textContent = 'Checking topic coverage...';
+  
+  const topicCoverage = {};
+  qs.forEach((q, i) => {
+    const topic = q.topic || 'unknown';
+    if(!topicCoverage[topic]){
+      topicCoverage[topic] = [];
+    }
+    topicCoverage[topic].push(i + 1);
+  });
+  
+  // 获取所有应该覆盖的题型
+  let expectedTopics = [];
+  if(currentExam === 'esat'){
+    const mod = selectedModules[0];
+    const topics = {
+      math1: ['algebra','coordinate geometry','statistics and probability','trigonometry','sequences and series','functions','unit conversion','ratio and proportion'],
+      math2: ['calculus','sequences and series','trigonometry','proofs','derivatives','integration','applications of calculus'],
+      physics: ['mechanics','electricity','waves','thermodynamics','modern physics','materials','experimental data analysis','newton laws','energy conservation','circuit analysis'],
+      chem: ['organic chemistry','inorganic chemistry','reaction rates and energetics','atomic structure','bonding','stoichiometry','kinetics','equilibria','reaction mechanisms'],
+      biology: ['cell biology','genetics','ecology','physiology','evolution','biotechnology','data interpretation and graphing','DNA replication','cellular organelles']
+    };
+    expectedTopics = topics[mod] || [];
+  }else{
+    const p1Topics = ['algebra','coordinate geometry','calculus','trigonometry','sequences and series','functions','graphs','exponentials and logarithms'];
+    const p2Topics = ['logic','proof techniques','number theory','counting','inequalities','mathematical reasoning','identifying proof errors','mathematical arguments','logical connectives'];
+    expectedTopics = selectedPaper === 'P1' ? p1Topics : p2Topics;
+  }
+  
+  // 检查题型覆盖情况
+  const coveredTopics = Object.keys(topicCoverage);
+  const missingTopics = expectedTopics.filter(t => !coveredTopics.includes(t));
+  const extraTopics = coveredTopics.filter(t => !expectedTopics.includes(t));
+  
+  console.log('Topic coverage analysis:');
+  console.log('Expected topics:', expectedTopics);
+  console.log('Covered topics:', coveredTopics);
+  console.log('Missing topics:', missingTopics);
+  console.log('Extra topics:', extraTopics);
+  
+  // 如果有缺失的题型，生成补充题目
+  if(missingTopics.length > 0){
+    document.getElementById('gSub').textContent = `Adding ${missingTopics.length} missing topics...`;
+    
+    for(const missingTopic of missingTopics){
+      try{
+        const newQ = await generateSingleQuestionByTopic(qs.length + 1, missingTopic, qs);
+        if(newQ){
+          qs.push(newQ);
+          fixedCount++;
+          console.log(`Added question for missing topic: ${missingTopic}`);
+        }
+      }catch(e){
+        console.error(`Failed to add topic ${missingTopic}:`, e);
+      }
+    }
+    
+    // 重新打乱题目顺序
+    for(let i = qs.length - 1; i > 0; i--){
+      const j = Math.floor(Math.random() * (i + 1));
+      [qs[i], qs[j]] = [qs[j], qs[i]];
+    }
+    
+    // 重新分配题目编号
+    qs.forEach((q, idx) => {
+      q.number = idx + 1;
+    });
+  }
+  
+  document.getElementById('gSub').textContent = 'Checking structure...';
+  
+  for(let i = 0; i < qs.length; i++){
+    const q = qs[i];
+    const structVal = validateQuestion(q);
+    if(!structVal.valid){
+      document.getElementById('gSub').textContent = `Regenerating Q${i + 1} (invalid structure)...`;
+      const newQ = await generateSingleQuestion(i + 1, qs.filter((_, idx) => idx !== i), 2);
+      if(newQ){
+        qs[i] = newQ;
+        fixedCount++;
+      }
+    }
+  }
+  
+  const batchSize = 4;
+  const totalBatches = Math.ceil(qs.length / batchSize);
+  
+  for(let batchIdx = 0; batchIdx < totalBatches; batchIdx++){
+    const startIdx = batchIdx * batchSize;
+    const endIdx = Math.min(startIdx + batchSize, qs.length);
+    const batchQuestions = qs.slice(startIdx, endIdx);
+    
+    document.getElementById('gTitle').textContent = `Batch ${batchIdx + 1}/${totalBatches}`;
+    document.getElementById('gSub').textContent = `Checking Q${startIdx + 1}-Q${endIdx}...`;
+    
+    const batchResults = await verifyBatchWithAI(batchQuestions, startIdx);
+    
+    for(let j = 0; j < batchResults.length; j++){
+      const result = batchResults[j];
+      if(result && result.hasIssue){
+        const qIdx = startIdx + j;
+        const q = qs[qIdx];
+        
+        if(result.issueType === 'wrongAnswer' || result.issueType === 'wrongSolution'){
+          document.getElementById('gSub').textContent = `Fixing Q${qIdx + 1}...`;
+          
+          if(result.correctAnswer !== undefined){
+            const correctIdx = result.correctAnswer.charCodeAt(0) - 65;
+            if(correctIdx >= 0 && correctIdx <= 4){
+              q.correct_index = correctIdx;
+            }
+          }
+          if(result.correctSolution){
+            q.solution = result.correctSolution;
+          }
+          
+          fixedCount++;
+          console.log(`Q${qIdx + 1} fixed: ${result.issueType}`);
+        }
+      }
+    }
+    
+    const progress = Math.round((batchIdx + 1) / totalBatches * 100);
+    document.getElementById('gBar').style.width = `${progress}%`;
+    document.getElementById('gPct').textContent = `Verified ${endIdx}/${qs.length}`;
+    await new Promise(r => setTimeout(r, 200));
+  }
+  
+  return fixedCount;
+}
+
+async function verifyBatchWithAI(questions, startIdx){
+  const L = ['A','B','C','D','E'];
+  
+  let questionsText = '';
+  questions.forEach((q, i) => {
+    const globalIdx = startIdx + i + 1;
+    questionsText += `
+--- Question ${globalIdx} ---
+Topic: ${q.topic || 'General'}
+Question: ${q.question}
+
+Options:
+A. ${q.options[0]}
+B. ${q.options[1]}
+C. ${q.options[2]}
+D. ${q.options[3]}
+E. ${q.options[4]}
+
+Stated Answer: ${L[q.correct_index]}
+Solution: ${q.solution}
+
+`;
+  });
+  
+  const verifyPrompt = `You are a STRICT exam question verifier. You need to verify multiple questions at once.
+
+${questionsText}
+
+YOUR TASK:
+For EACH question, solve it yourself and verify:
+1. Is the stated answer correct?
+2. Is the solution correct and complete?
+
+Reply with JSON array (one object per question in order):
+[
+  {
+    "questionIndex": 0,
+    "hasIssue": true/false,
+    "issueType": "wrongAnswer" / "wrongSolution" / "none",
+    "correctAnswer": "A/B/C/D/E" (only if hasIssue is true),
+    "correctSolution": "correct solution" (only if hasIssue is true),
+    "explanation": "brief explanation"
+  },
+  ...
+]
+
+IMPORTANT:
+- Return JSON array with one object per question
+- questionIndex should be 0 for first question in batch, 1 for second, etc.
+- If no issue, set hasIssue: false and issueType: "none"`;
+
+  try{
+    const raw = await callAI(verifyPrompt, 4000, true, false);
+    const parsed = tryParseJSON(raw);
+    
+    if(Array.isArray(parsed)){
+      return parsed;
+    }else if(parsed && parsed.questions){
+      return parsed.questions;
+    }else{
+      return questions.map(() => ({hasIssue: false, issueType: 'none'}));
+    }
+  }catch(e){
+    console.error('Batch verification failed:', e);
+    return questions.map(() => ({hasIssue: false, issueType: 'none'}));
+  }
+}
+
+// Exam Functions
+function startExam(){
+  if(!timerMode) return;
+  
+  showSec('exam');
+  
+  // Setup exam UI
+  const config = EXAM_CONFIG[currentExam];
+  if(currentExam === 'esat'){
+    const modNames = {math1:'Mathematics 1',math2:'Mathematics 2',physics:'Physics',chem:'Chemistry',biology:'Biology'};
+    document.getElementById('eLbl').textContent = selectedModules[0].toUpperCase();
+    document.getElementById('eHead').textContent = modNames[selectedModules[0]];
+  }else{
+    const pNames = {P1:'Mathematical Knowledge',P2:'Mathematical Reasoning'};
+    document.getElementById('eLbl').textContent = selectedPaper;
+    document.getElementById('eHead').textContent = pNames[selectedPaper];
+  }
+  
+  document.getElementById('eDiff').textContent = diff.charAt(0).toUpperCase() + diff.slice(1);
+  document.getElementById('eDiff').className = `dpill ${diff}`;
+  
+  // Setup timer
+  const timeLimit = currentExam === 'esat' ? config.timePerModule : config.timePerPaper;
+  timerSecs = timeLimit * 60;
+  
+  if(timerMode === 'timed'){
+    startCountdown();
+  }else{
+    document.getElementById('timerDisplay').textContent = '∞';
+  }
+  
+  // Show dots
+  buildDots();
+  
+  // Show first question
+  renderQ(0);
+  
+  // Hide chat during exam
+  document.getElementById('cFab').style.display = 'none';
+  
+  // Setup chat context
+  const examName = currentExam === 'esat' ? 'ESAT' : 'TMUA';
+  const paperInfo = currentExam === 'esat' ? selectedModules[0] : selectedPaper;
+  chatCtx = `Student taking ${examName} ${paperInfo}, ${diff} difficulty. ${qs.length} questions.`;
+}
+
+function startCountdown(){
+  clearInterval(timerInterval);
+  timerInterval = setInterval(() => {
+    timerSecs--;
+    const m = Math.floor(timerSecs / 60).toString().padStart(2, '0');
+    const s = (timerSecs % 60).toString().padStart(2, '0');
+    document.getElementById('timerDisplay').textContent = m + ':' + s;
+    
+    if(timerSecs <= 0){
+      clearInterval(timerInterval);
+      alert('Time is up! Your exam will be submitted automatically.');
+      submitExam();
+    }
+  }, 1000);
+}
+
+function stopTimer(){
+  clearInterval(timerInterval);
+}
+
+function buildDots(){
+  const grid = document.getElementById('dotGrid');
+  grid.innerHTML = '';
+  qs.forEach((_, i) => {
+    const dot = document.createElement('div');
+    dot.className = 'dot';
+    dot.textContent = i + 1;
+    dot.onclick = () => goQ(i);
+    grid.appendChild(dot);
+  });
+}
+
+function renderQ(idx){
+  curQ = idx;
+  const q = qs[idx];
+  if(!q) return;
+  
+  // Track time
+  if(questionStartTime){
+    const timeSpent = Math.floor((Date.now() - questionStartTime) / 1000);
+    questionTimes[curQ] = (questionTimes[curQ] || 0) + timeSpent;
+  }
+  questionStartTime = Date.now();
+  
+  const challenge = questionChallenges[idx] || {};
+  const hasCustomOption = challenge.customOption && challenge.customOption.trim();
+  const isChallengeActive = challenge.selected === true;
+  
+  const wrap = document.getElementById('qWrap');
+  wrap.innerHTML = `
+    <div class="qcard">
+      <div class="q-header">
+        <div class="q-info">
+          <div class="qnum">QUESTION ${idx + 1} OF ${qs.length}</div>
+          <div class="qtopic">${q.topic || 'General'}</div>
+        </div>
+        <button class="challenge-btn ${isChallengeActive ? 'active' : ''}" onclick="toggleChallenge(${idx})" title="Challenge this question">!</button>
+      </div>
+      <div class="qbody">${q.question}</div>
+      <div class="f-option-wrap ${isChallengeActive ? 'open' : ''}">
+        <div class="f-option-label">F. Your Answer (if you think the question has an error)</div>
+        <textarea class="f-option-input" placeholder="Type your answer here..." onchange="updateCustomOption(${idx}, this.value)">${hasCustomOption ? challenge.customOption : ''}</textarea>
+      </div>
+      <div class="opts">
+        ${q.options.map((opt, i) => {
+          // 清理选项内容，移除 A)、B) 等前缀
+          let cleanedOpt = opt.trim();
+          // 移除形如 "A) "、"B) " 等前缀
+          cleanedOpt = cleanedOpt.replace(/^[A-E]\)\s*/, '');
+          // 移除形如 "A. "、"B. " 等前缀
+          cleanedOpt = cleanedOpt.replace(/^[A-E]\.\s*/, '');
+          return `
+            <div class="opt ${ans[idx] === i ? 'sel' : ''}" onclick="selectOpt(${idx}, ${i})">
+              <div class="okey">${String.fromCharCode(65+i)}</div>
+              <div class="oval">${cleanedOpt}</div>
+            </div>
+          `;
+        }).join('')}
+        ${hasCustomOption ? `
+          <div class="opt ${ans[idx] === 5 ? 'sel' : ''}" onclick="selectOpt(${idx}, 5)">
+            <div class="okey">F</div>
+            <div class="oval">${challenge.customOption}</div>
+          </div>
+        ` : ''}
+      </div>
+    </div>
+  `;
+  
+  updateProgress();
+  
+  // 移除挑战按钮的 loading 类
+  const challengeBtn = wrap.querySelector('.challenge-btn');
+  if(challengeBtn && challengeBtn.classList.contains('loading')){
+    challengeBtn.classList.remove('loading');
+    challengeBtn.textContent = '!';
+  }
+  
+  if(window.MathJax && MathJax.typesetPromise){
+    MathJax.typesetPromise([wrap]).catch((err) => {
+      console.error('MathJax rendering failed:', err);
+      setTimeout(() => {
+        try{
+          MathJax.typesetPromise([wrap]);
+        }catch(e){
+          console.error('MathJax retry failed:', e);
+        }
+      }, 500);
+    });
+  }
+}
+
+function refreshMathJax(){
+  if(window.MathJax && MathJax.typesetPromise){
+    MathJax.typesetPromise().then(() => {
+      console.log('MathJax refreshed');
+    }).catch((err) => {
+      console.error('MathJax refresh failed:', err);
+    });
+  }
+}
+
+function selectOpt(qIdx, optIdx){
+  ans[qIdx] = optIdx;
+  renderQ(qIdx);
+}
+
+function updateProgress(){
+  const answered = Object.keys(ans).length;
+  const total = qs.length;
+  const pct = Math.round((answered/total)*100);
+  
+  document.getElementById('eStat').textContent = `${answered} / ${total} answered`;
+  document.getElementById('pFill').style.width = `${pct}%`;
+  document.getElementById('pLbl').textContent = `${pct}%`;
+  
+  const dots = document.querySelectorAll('.dot');
+  dots.forEach((dot, i) => {
+    dot.classList.toggle('answered', ans[i] !== undefined);
+    dot.classList.toggle('current', i === curQ);
+  });
+  
+  // 更新导航按钮显示
+  const navContainer = document.querySelector('.qnav');
+  if(navContainer){
+    const prevBtn = navContainer.querySelector('.btn-ghost');
+    const nextBtn = navContainer.querySelector('.btn-prime');
+    const submitBtn = navContainer.querySelector('.btn-submit');
+    
+    if(prevBtn) prevBtn.style.display = curQ === 0 ? 'none' : 'block';
+    if(nextBtn) nextBtn.style.display = curQ === qs.length - 1 ? 'none' : 'block';
+    // 提交按钮始终显示
+    if(submitBtn) submitBtn.style.display = 'block';
+  }
+}
+
+function goQ(idx){
+  if(idx < 0 || idx >= qs.length) return;
+  
+  // 移除所有 challenge 按钮的 loading 类
+  const challengeBtns = document.querySelectorAll('.challenge-btn.loading');
+  challengeBtns.forEach(btn => {
+    btn.classList.remove('loading');
+    btn.textContent = '!';
+  });
+  
+  renderQ(idx);
+}
+
+function prevQ(){
+  if(curQ > 0) goQ(curQ - 1);
+}
+
+function nextQ(){
+  if(curQ < qs.length - 1) goQ(curQ + 1);
+}
+
+function toggleChallenge(idx){
+  const btn = event.currentTarget;
+  btn.textContent = '⏳';
+  btn.classList.add('loading');
+  setTimeout(() => {
+    if(!questionChallenges[idx]){
+      questionChallenges[idx] = {customOption: '', selected: false};
+    }
+    questionChallenges[idx].selected = !questionChallenges[idx].selected;
+    // 渲染后会自动移除 loading 类
+    renderQ(idx);
+  }, 300);
+}
+
+function updateCustomOption(idx, value){
+  if(!questionChallenges[idx]){
+    questionChallenges[idx] = {customOption: '', selected: false};
+  }
+  questionChallenges[idx].customOption = value;
+  if(value && value.trim()){
+    questionChallenges[idx].selected = true;
+  }
+  renderQ(idx);
+}
+
+async function evaluateChallengeWithAI(q, qIdx, userCustomOption){
+  const L = ['A','B','C','D','E'];
+  const verifyPrompt = `You are a STRICT exam question evaluator. A student is challenging Question ${qIdx + 1}.
+
+ORIGINAL QUESTION:
+${q.question}
+
+Options:
+A. ${q.options[0]}
+B. ${q.options[1]}
+C. ${q.options[2]}
+D. ${q.options[3]}
+E. ${q.options[4]}
+
+Stated Correct Answer: ${L[q.correct_index]}
+Original Solution: ${q.solution}
+
+STUDENT'S CHALLENGE:
+The student believes this question has an error and provided their own answer: "${userCustomOption}"
+
+YOUR TASK:
+1. Carefully solve the problem yourself
+2. Compare your answer with the stated correct answer
+3. Evaluate if the student's custom answer is correct
+4. Determine if there is an error in the question
+
+Reply with JSON only:
+{
+  "isQuestionCorrect": true/false,
+  "isStudentCorrect": true/false,
+  "correctAnswer": "A/B/C/D/E or the student's answer if correct",
+  "correctSolution": "step-by-step correct solution",
+  "explanation": "brief explanation of your decision"
+}`;
+
+  try{
+    const raw = await callAI(verifyPrompt, 3000, true);
+    const parsed = tryParseJSON(raw);
+    if(!parsed) return null;
+    return parsed;
+  }catch(e){
+    console.error(`Challenge evaluation failed for Q${qIdx}:`, e);
+    return null;
+  }
+}
+
+async function submitExam(){
+  showConfirmModal('Confirm Submission', 'Are you sure you want to submit?', async () => {
+    stopTimer();
+    
+    // 评估所有用户的质疑
+    const challengeKeys = Object.keys(questionChallenges);
+    if(challengeKeys.length > 0){
+      showChallengeModal('Evaluating Challenges', 'AI is reviewing your question challenges...');
+      
+      for(let i = 0; i < challengeKeys.length; i++){
+        const qIdx = parseInt(challengeKeys[i]);
+        const challenge = questionChallenges[qIdx];
+        const q = qs[qIdx];
+        
+        if(challenge.customOption && challenge.customOption.trim()){
+          updateChallengeStatus(`Evaluating Question ${qIdx + 1}...`);
+          
+          const evaluation = await evaluateChallengeWithAI(q, qIdx, challenge.customOption);
+          
+          if(evaluation){
+            if(!evaluation.isQuestionCorrect || evaluation.isStudentCorrect){
+              // 题目确实有问题，修正题目
+              correctedQuestions[qIdx] = {
+                correct_index: q.correct_index,
+                solution: q.solution,
+                originalCorrectIndex: q.correct_index,
+                originalSolution: q.solution,
+                studentCorrect: evaluation.isStudentCorrect,
+                explanation: evaluation.explanation
+              };
+              
+              if(!evaluation.isQuestionCorrect){
+                // 更新正确答案和解析
+                if(evaluation.correctAnswer && evaluation.correctAnswer.length === 1){
+                  q.correct_index = evaluation.correctAnswer.charCodeAt(0) - 65;
+                }
+                if(evaluation.correctSolution){
+                  q.solution = evaluation.correctSolution;
+                }
+                correctedQuestions[qIdx].correct_index = q.correct_index;
+                correctedQuestions[qIdx].solution = q.solution;
+              }
+            }
+          }
+        }
+      }
+      
+      updateChallengeStatus('Challenges evaluated successfully', 'success');
+      setTimeout(() => {
+        closeChallengeModal();
+        calculateResults();
+        showSec('results');
+      }, 1500);
+    }else{
+      calculateResults();
+      showSec('results');
+    }
+  }, () => {
+    // Cancel - do nothing
+  });
+}
+
+function showChallengeModal(title, desc){
+  document.getElementById('challengeTitle').textContent = title;
+  document.getElementById('challengeDesc').textContent = desc;
+  document.getElementById('challengeStatus').className = 'challenge-status loading';
+  document.getElementById('challengeStatusText').textContent = 'Processing...';
+  document.getElementById('challengeResult').style.display = 'none';
+  document.getElementById('challengeOverlay').classList.add('open');
+}
+
+function showConfirmModal(title, message, onConfirm, onCancel){
+  const overlay = document.createElement('div');
+  overlay.className = 'challenge-overlay open';
+  overlay.style.zIndex = '10002';
+  
+  const modal = document.createElement('div');
+  modal.className = 'challenge-modal';
+  modal.innerHTML = `
+    <h3>${title}</h3>
+    <p>${message}</p>
+    <div class="challenge-actions" style="justify-content:center;">
+      <button class="btn-ok" style="background:var(--accent);color:#fff;">Confirm</button>
+    </div>
+  `;
+  
+  overlay.appendChild(modal);
+  document.body.appendChild(overlay);
+  
+  const confirmBtn = modal.querySelector('.btn-ok');
+  
+  confirmBtn.onclick = (e) => {
+    e.stopPropagation();
+    document.body.removeChild(overlay);
+    if(onConfirm) onConfirm();
+  };
+  
+  overlay.onclick = (e) => {
+    if(e.target === overlay){
+      document.body.removeChild(overlay);
+      if(onCancel) onCancel();
+    }
+  };
+}
+
+function updateChallengeStatus(text, status = 'loading'){
+  const statusEl = document.getElementById('challengeStatus');
+  const textEl = document.getElementById('challengeStatusText');
+  const okBtn = document.getElementById('challengeOKBtn');
+  
+  statusEl.className = `challenge-status ${status}`;
+  textEl.textContent = text;
+  
+  // 根据状态显示不同图标
+  const statusIcon = statusEl.querySelector('.status-icon');
+  if(statusIcon){
+    if(status === 'loading'){
+      statusIcon.textContent = '⏳';
+    }else if(status === 'success'){
+      statusIcon.textContent = '✓';
+    }else if(status === 'error'){
+      statusIcon.textContent = '!';
+    }else if(status === 'rejected'){
+      statusIcon.textContent = 'ⓘ';
+    }
+  }
+  
+  // 审核过程中显示Cancel按钮，其他状态显示OK按钮
+  if(status === 'loading'){
+    okBtn.textContent = 'Cancel';
+    okBtn.onclick = closeChallengeModal;
+  }else{
+    okBtn.textContent = 'OK';
+    okBtn.onclick = handleChallengeOK;
+  }
+  okBtn.style.display = 'block';
+}
+
+function closeChallengeModal(){
+  const overlay = document.getElementById('challengeOverlay');
+  if(overlay) overlay.classList.remove('open');
+  
+  // 移除所有 challenge 按钮的 loading 类
+  const challengeBtns = document.querySelectorAll('.challenge-btn.loading');
+  challengeBtns.forEach(btn => {
+    btn.classList.remove('loading');
+    btn.textContent = '!';
+  });
+}
+
+function handleChallengeOK(){
+  closeChallengeModal();
+  // 重新计算结果以反映可能的修正
+  calculateResults();
+  // 重新渲染LaTeX代码
+  if(window.MathJax){
+    MathJax.typesetPromise();
+  }
+}
+
+function calculateResults(){
+  let correct = 0;
+  const results = qs.map((q, i) => {
+    const userAns = ans[i];
+    const isCorrect = userAns === q.correct_index;
+    if(isCorrect) correct++;
+    
+    return{
+      number: i + 1,
+      question: q.question,
+      options: q.options,
+      userAnswer: userAns,
+      correctAnswer: q.correct_index,
+      isCorrect: isCorrect,
+      topic: q.topic,
+      solution: q.solution,
+      timeSpent: questionTimes[i] || 0,
+      wasCorrected: !!correctedQuestions[i]
+    };
+  });
+  
+  // Score display
+  document.getElementById('sBig').innerHTML = `${correct}<span>/${qs.length}</span>`;
+  
+  const pct = Math.round((correct/qs.length)*100);
+  let grade = '', gradeColor = '';
+  if(pct >= 90){ grade = 'Excellent'; gradeColor = '#4ade80'; }
+  else if(pct >= 70){ grade = 'Good'; gradeColor = '#f7c26a'; }
+  else if(pct >= 50){ grade = 'Pass'; gradeColor = '#f87171'; }
+  else{ grade = 'Below Pass'; gradeColor = '#f87171'; }
+  
+  document.getElementById('bPill').innerHTML = `<span style="color:${gradeColor}">${grade}</span>`;
+  
+  // Breakdown
+  const breakdown = results.reduce((acc, r) => {
+    if(r.isCorrect) acc.correct++;
+    else if(r.userAnswer === undefined) acc.skipped++;
+    else acc.wrong++;
+    return acc;
+  }, {correct: 0, wrong: 0, skipped: 0});
+  
+  document.getElementById('bCorrect').textContent = breakdown.correct;
+  document.getElementById('bWrong').textContent = breakdown.wrong;
+  document.getElementById('bSkipped').textContent = breakdown.skipped;
+  
+  // Summary
+  const timeConfig = currentExam === 'esat' ? EXAM_CONFIG[currentExam].timePerModule : EXAM_CONFIG[currentExam].timePerPaper;
+  const timeTaken = formatTime(timeConfig * 60 - timerSecs);
+  const examName = currentExam === 'esat' ? 'ESAT' : 'TMUA';
+  const paperInfo = currentExam === 'esat' ? selectedModules[0] : selectedPaper;
+  const correctedCount = Object.keys(correctedQuestions).length;
+  
+  let summaryHTML = `<p style="font-size:13px;color:var(--text2);line-height:1.7;margin-bottom:10px;">You completed <strong>${examName} ${paperInfo}</strong> at <strong>${diff}</strong> difficulty, scoring <strong>${correct}/${qs.length} (${pct}%)</strong>.</p>`;
+  
+  if(breakdown.wrong > 0 || breakdown.skipped > 0){
+    summaryHTML += `<p style="font-size:13px;color:var(--text2);line-height:1.7;"><strong>Areas to review:</strong> ${breakdown.wrong} wrong, ${breakdown.skipped} skipped.</p>`;
+  }
+  
+  if(correctedCount > 0){
+    summaryHTML += `<p style="font-size:13px;color:var(--ok);line-height:1.7;margin-top:10px;"><strong>✓ Corrections:</strong> ${correctedCount} question(s) were corrected based on your challenges.</p>`;
+  }
+  
+  if(pct >= 85){
+    summaryHTML += `<p style="font-size:13px;color:var(--ok);line-height:1.7;margin-top:10px;"><strong>🎯 Excellent!</strong> Well-prepared for the exam.</p>`;
+  }else if(pct < 50){
+    summaryHTML += `<p style="font-size:13px;color:var(--err);line-height:1.7;margin-top:10px;"><strong>💡 Tip:</strong> Review fundamentals and practice more ${diff} level problems.</p>`;
+  }
+  
+  document.getElementById('summaryContent').innerHTML = summaryHTML;
+  
+  // Show chat in results page
+  document.getElementById('cFab').style.display = 'flex';
+  
+  // Results list
+  const rList = document.getElementById('rList');
+  rList.innerHTML = results.map(r => {
+    const isCorrected = correctedQuestions[r.number - 1];
+    const correctionNote = isCorrected ? `<div style="margin-top:10px;padding:10px;background:rgba(74,222,128,.1);border-radius:8px;font-size:12px;color:var(--ok);border:1px solid rgba(74,222,128,.2);">✓ This question was corrected based on your challenge</div>` : '';
+    
+    return `
+    <div class="ri ${r.isCorrect ? 'ok' : r.userAnswer === undefined ? 'skip' : 'bad'}">
+      <div class="rhead">
+        <div class="rico">${r.isCorrect ? '✓' : r.userAnswer === undefined ? '−' : '✗'}</div>
+        <div class="rq">${r.question}</div>
+      </div>
+      <div class="rtags">
+        <span class="tag ttopic">${r.topic || 'General'}</span>
+        ${r.userAnswer !== undefined ? `<span class="tag tyours ${r.isCorrect ? 'ok' : ''}">Your: ${String.fromCharCode(65+r.userAnswer)}</span>` : ''}
+        <span class="tag tcorrect">Correct: ${String.fromCharCode(65+r.correctAnswer)}</span>
+      </div>
+      ${correctionNote}
+      <button class="solbtn" onclick="toggleSolution(this)">Show Solution</button>
+      <button class="solbtn challenge" onclick="challengeSolution(${r.number - 1})")">!</button>
+      <div class="solbox">
+        <div class="soloptions">
+          ${r.options.map((opt, i) => `
+            <div class="solopt ${i === r.correctAnswer ? 'correct' : i === r.userAnswer && r.userAnswer !== undefined ? 'yours' : ''}">
+              <span class="soloptkey">${String.fromCharCode(65+i)}</span>
+              <span class="soloptval">${opt}</span>
+            </div>
+          `).join('')}
+        </div>
+        <div class="solsolution">${r.solution}</div>
+      </div>
+    </div>
+  `;
+  }).join('');
+  
+  // Update chat context
+  const L = ['A','B','C','D','E'];
+  let examQuestions = '';
+  qs.forEach((q, i) => {
+    const userAns = ans[i];
+    const correctAns = q.correct_index;
+    const isCorrect = userAns === correctAns;
+    examQuestions += `\nQ${i+1} (${q.topic}): ${q.question}\n`;
+    examQuestions += `Options: A. ${q.options[0]}, B. ${q.options[1]}, C. ${q.options[2]}, D. ${q.options[3]}, E. ${q.options[4]}\n`;
+    examQuestions += `Correct: ${L[correctAns]}\n`;
+    examQuestions += `Your answer: ${userAns !== undefined ? L[userAns] : 'Skipped'}\n`;
+    examQuestions += `Result: ${isCorrect ? 'Correct' : 'Wrong'}\n`;
+  });
+  chatCtx += `\nResults: ${correct}/${qs.length} correct (${pct}%).\n`;
+  chatCtx += `\nExam Questions:${examQuestions}`;
+}
+
+function toggleSolution(btn){
+  const solbox = btn.nextElementSibling.nextElementSibling;
+  const isOpening = !solbox.classList.contains('open');
+  solbox.classList.toggle('open');
+  btn.textContent = isOpening ? 'Hide Solution' : 'Show Solution';
+  
+  if(isOpening && window.MathJax){
+    MathJax.typesetPromise([solbox]);
+  }
+}
+
+async function challengeSolution(qIdx){
+  const q = qs[qIdx];
+  const L = ['A','B','C','D','E'];
+  
+  // 找到挑战按钮并添加 loading 类
+  const btn = event.currentTarget;
+  btn.textContent = '⏳';
+  btn.classList.add('loading');
+  
+  showChallengeModal('Reviewing Solution', `AI is re-evaluating Question ${qIdx + 1}...`);
+  
+  const reviewPrompt = `You are a STRICT exam solution reviewer. A student is challenging the solution for Question ${qIdx + 1}.
+
+QUESTION:
+${q.question}
+
+Options:
+A. ${q.options[0]}
+B. ${q.options[1]}
+C. ${q.options[2]}
+D. ${q.options[3]}
+E. ${q.options[4]}
+
+Current Correct Answer: ${L[q.correct_index]}
+Current Solution: ${q.solution}
+
+YOUR TASK:
+1. Carefully solve the problem yourself
+2. Verify if the current solution is correct
+3. If there's an error, provide the correct solution
+
+Reply with JSON only:
+{
+  "isSolutionCorrect": true/false,
+  "correctAnswer": "A/B/C/D/E",
+  "correctSolution": "step-by-step correct solution",
+  "explanation": "brief explanation of your decision"
+}`;
+
+  try{
+    const raw = await callAI(reviewPrompt, 3000, true);
+    const review = tryParseJSON(raw);
+    
+    if(review && !review.isSolutionCorrect){
+      // 解析确实错了，修正题目
+      updateChallengeStatus('Solution error found! Updating...', 'loading');
+      
+      correctedQuestions[qIdx] = {
+        correct_index: q.correct_index,
+        solution: q.solution,
+        originalCorrectIndex: q.correct_index,
+        originalSolution: q.solution,
+        studentCorrect: false,
+        explanation: review.explanation
+      };
+      
+      // 更新正确答案和解析
+      if(review.correctAnswer && review.correctAnswer.length === 1){
+        q.correct_index = review.correctAnswer.charCodeAt(0) - 65;
+      }
+      if(review.correctSolution){
+        q.solution = review.correctSolution;
+      }
+      correctedQuestions[qIdx].correct_index = q.correct_index;
+      correctedQuestions[qIdx].solution = q.solution;
+      
+      updateChallengeStatus('Solution corrected successfully', 'success');
+      // 不再自动关闭，等待用户点击OK
+    }else{
+      updateChallengeStatus('The original answer is correct. Your challenge was not accepted.', 'rejected');
+      // 不再自动关闭，等待用户点击OK
+    }
+  }catch(e){
+    console.error(`Solution review failed for Q${qIdx}:`, e);
+    updateChallengeStatus('Review failed. Please try again.', 'error');
+    // 不再自动关闭，等待用户点击OK
+  }finally{
+    // 移除挑战按钮的 loading 类
+    const btn = event.currentTarget;
+    if(btn && btn.classList.contains('loading')){
+      btn.classList.remove('loading');
+      btn.textContent = '🔍';
+    }
+  }
+}
+
+function formatTime(secs){
+  const m = Math.floor(secs / 60);
+  const s = secs % 60;
+  return `${m}m ${s}s`;
+}
+
+// Download Results
+function downloadResults(){
+  try{
+    printResultsAsPDF();
+  }catch(e){
+    console.error('Print to PDF failed:', e);
+    alert('Failed to generate PDF. Please try using the browser print function (Ctrl+P or Cmd+P)');
+  }
+}
+
+function printResultsAsPDF(){
+  const originalContent = document.body.innerHTML;
+  const resultsSection = document.getElementById('results').cloneNode(true);
+  resultsSection.style.display = 'block';
+  resultsSection.style.opacity = '1';
+  
+  // 显示所有解析和选项
+  const solboxes = resultsSection.querySelectorAll('.solbox');
+  solboxes.forEach(box => {
+    box.classList.add('open');
+  });
+  
+  const printStyle = document.createElement('style');
+  printStyle.innerHTML = `
+    @media print {
+      body * { visibility: hidden; }
+      #print-content, #print-content * { visibility: visible; }
+      #print-content { position: absolute; left: 0; top: 0; width: 100%; }
+      #print-content .refresh-math-btn, #print-content .btn-ghost, #print-content .dlbtn, #print-content #cFab, #print-content #cpanel, #print-content .challenge-overlay { display: none !important; }
+      #print-content .solbtn.challenge { display: none !important; }
+      #print-content .solbtn { display: none !important; }
+    }
+    body { background: white; color: black; }
+    #print-content { padding: 20px; }
+  `;
+  
+  const printContainer = document.createElement('div');
+  printContainer.id = 'print-content';
+  printContainer.appendChild(resultsSection);
+  document.body.appendChild(printStyle);
+  document.body.appendChild(printContainer);
+  
+  if(window.MathJax && MathJax.typesetPromise){
+    MathJax.typesetPromise([printContainer]).then(() => {
+      setTimeout(() => {
+        window.print();
+        setTimeout(() => {
+          document.body.removeChild(printStyle);
+          document.body.removeChild(printContainer);
+        }, 100);
+      }, 500);
+    }).catch(() => {
+      setTimeout(() => {
+        window.print();
+        setTimeout(() => {
+          document.body.removeChild(printStyle);
+          document.body.removeChild(printContainer);
+        }, 100);
+      }, 500);
+    });
+  }else{
+    setTimeout(() => {
+      window.print();
+      setTimeout(() => {
+        document.body.removeChild(printStyle);
+        document.body.removeChild(printContainer);
+      }, 100);
+    }, 500);
+  }
+}
+
+// Chat Functions
+function toggleChat(){
+  chatOpen = !chatOpen;
+  const p = document.getElementById('cpanel');
+  const ic = document.getElementById('cFabIcon');
+  if(chatOpen){
+    p.classList.add('open');
+    ic.textContent = '×';
+    document.getElementById('cUnread').style.display = 'none';
+    document.getElementById('cIn').focus();
+  }else{
+    p.classList.remove('open');
+    ic.textContent = '💬';
+  }
+}
+
+function closeChat(){
+  chatOpen = false;
+  document.getElementById('cpanel').classList.remove('open');
+  document.getElementById('cFabIcon').textContent = '💬';
+}
+
+async function sendChat(){
+  const inp = document.getElementById('cIn');
+  const msg = inp.value.trim();
+  if(!msg) return;
+  
+  inp.value = '';
+  const box = document.getElementById('cMsgs');
+  const em = box.querySelector('.cempty');
+  if(em) em.remove();
+  
+  addChatMsg(msg, 'user');
+  const typing = addChatMsg('Thinking…', 'ai typing');
+  
+  chatHist.push({role: 'user', content: msg});
+  
+  const examName = currentExam === 'esat' ? 'ESAT' : 'TMUA';
+  const sys = `You are a helpful, expert ${examName} tutor. You have full access to the student's exam.\n\nEXAM CONTEXT:\n${chatCtx}\n\nAnswer clearly. Use LaTeX (\\( \\) inline, \\[ \\] display). Keep responses under 300 words. Be encouraging.`;
+  
+  try{
+    const r = await fetch(`${API_CONFIG.baseUrl}/chat/completions`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer " + API_CONFIG.apiKey
+      },
+      body: JSON.stringify({
+        model: API_CONFIG.modelTurbo,
+        max_tokens: 1024,
+        messages: [{role: "system", content: sys}, ...chatHist]
+      })
+    });
+    
+    if(!r.ok) throw new Error(`API ${r.status}`);
+    
+    const d = await r.json();
+    const reply = d.choices?.[0]?.message?.content || '';
+    
+    chatHist.push({role: 'assistant', content: reply});
+    typing.textContent = reply;
+    typing.className = 'cmsg ai';
+    
+    if(window.MathJax) MathJax.typesetPromise([typing]);
+  }catch(e){
+    typing.textContent = 'Error: ' + e.message;
+    typing.className = 'cmsg ai';
+    chatHist.pop();
+  }
+  
+  box.scrollTop = box.scrollHeight;
+  if(!chatOpen) document.getElementById('cUnread').style.display = 'block';
+}
+
+function addChatMsg(text, cls){
+  const box = document.getElementById('cMsgs');
+  const d = document.createElement('div');
+  d.className = 'cmsg ' + cls;
+  d.textContent = text;
+  box.appendChild(d);
+  box.scrollTop = box.scrollHeight;
+  return d;
+}
+</script>
+</body>
+</html>
